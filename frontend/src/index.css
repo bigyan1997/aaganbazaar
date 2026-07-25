@@ -10,25 +10,25 @@
   --color-text-muted: #6b7690;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* Tailwind's own preflight (in @layer base) already zeroes margin/padding
+   and sets border-box - these rules must live in the same layer, or being
+   unlayered would make them beat every utility class regardless of
+   specificity (CSS cascade layers: unlayered always wins over layered). */
+@layer base {
+  html {
+    scrollbar-gutter: stable;
+  }
 
-html {
-  scrollbar-gutter: stable;
-}
-
-body {
-  font-family:
-    "Inter",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  background-color: var(--color-cream);
-  color: var(--color-navy);
+  body {
+    font-family:
+      "Inter",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background-color: var(--color-cream);
+    color: var(--color-navy);
+  }
 }
