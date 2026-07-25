@@ -4,8 +4,10 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { addCartItem } from "../../api/cart";
 import { getProduct, getProductReviews } from "../../api/catalog";
+import { getReviewableOrderItem } from "../../api/reviews";
 import ProductGallery from "../../components/catalog/ProductGallery";
 import StarRating from "../../components/catalog/StarRating";
+import ReviewForm from "../../components/orders/ReviewForm";
 import useAuthStore from "../../store/authStore";
 import { extractErrorMessage } from "../../utils/errors";
 
@@ -24,6 +26,11 @@ export default function ProductDetailPage() {
     queryKey: ["product-reviews", slug],
     queryFn: () => getProductReviews(slug),
     enabled: Boolean(product),
+  });
+  const { data: reviewable } = useQuery({
+    queryKey: ["reviewable-item", slug],
+    queryFn: () => getReviewableOrderItem(slug),
+    enabled: status === "authenticated",
   });
 
   const addToCart = useMutation({
@@ -90,6 +97,21 @@ export default function ProductDetailPage() {
 
       <section>
         <h2 className="mb-3 text-lg font-semibold text-navy">Reviews</h2>
+
+        {reviewable?.order_item_id && (
+          <div className="mb-4">
+            <p className="mb-1 text-sm font-medium text-navy">You bought this - leave a review</p>
+            <ReviewForm
+              orderItemId={reviewable.order_item_id}
+              onSuccess={() => {
+                queryClient.invalidateQueries({ queryKey: ["product-reviews", slug] });
+                queryClient.invalidateQueries({ queryKey: ["product", slug] });
+                queryClient.invalidateQueries({ queryKey: ["reviewable-item", slug] });
+              }}
+            />
+          </div>
+        )}
+
         {reviews?.length ? (
           <ul className="flex flex-col gap-3">
             {reviews.map((review) => (

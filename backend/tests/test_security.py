@@ -148,6 +148,14 @@ class TestIDOR(BaseAPITest):
         r = self.client.patch(f"/api/reviews/{review.id}/", {"rating": 1}, format="json")
         self.assertEqual(r.status_code, 404)
 
+    def test_reviewable_item_scoped_to_own_purchases_only(self):
+        # A delivered purchase belonging to someone else must never make
+        # the endpoint offer up their order_item id to a different user.
+        _, _, order_item = self.create_order(status="delivered")
+        self.authenticate()  # different buyer, never bought this product
+        r = self.client.get(f"/api/products/{order_item.product.slug}/reviewable-item/")
+        self.assertIsNone(r.data["order_item_id"])
+
 
 # ─── Mass Assignment ────────────────────────────────────────────────────────────
 

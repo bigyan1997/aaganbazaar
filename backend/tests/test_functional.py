@@ -480,3 +480,31 @@ class TestReviewFunctional(BaseAPITest):
         r = self.client.get(f"/api/products/{product.slug}/reviews/")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.data["count"], 1)
+
+    def test_reviewable_item_requires_auth(self):
+        product = self.create_product()
+        r = self.client.get(f"/api/products/{product.slug}/reviewable-item/")
+        self.assertEqual(r.status_code, 401)
+
+    def test_reviewable_item_null_when_nothing_delivered(self):
+        buyer = self.create_user()
+        _, _, order_item = self.create_order(buyer=buyer, status="pending")
+        self.authenticate(buyer)
+        r = self.client.get(f"/api/products/{order_item.product.slug}/reviewable-item/")
+        self.assertEqual(r.status_code, 200)
+        self.assertIsNone(r.data["order_item_id"])
+
+    def test_reviewable_item_returns_id_for_delivered_unreviewed_purchase(self):
+        buyer = self.create_user()
+        _, _, order_item = self.create_order(buyer=buyer, status="delivered")
+        self.authenticate(buyer)
+        r = self.client.get(f"/api/products/{order_item.product.slug}/reviewable-item/")
+        self.assertEqual(r.data["order_item_id"], order_item.id)
+
+    def test_reviewable_item_null_after_review_submitted(self):
+        buyer = self.create_user()
+        _, _, order_item = self.create_order(buyer=buyer, status="delivered")
+        self.authenticate(buyer)
+        self.client.post("/api/reviews/", {"order_item": order_item.id, "rating": 5}, format="json")
+        r = self.client.get(f"/api/products/{order_item.product.slug}/reviewable-item/")
+        self.assertIsNone(r.data["order_item_id"])

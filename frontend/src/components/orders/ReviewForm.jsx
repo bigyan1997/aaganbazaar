@@ -4,12 +4,13 @@ import { useState } from "react";
 import { createReview } from "../../api/reviews";
 import { extractErrorMessage } from "../../utils/errors";
 
-export default function ReviewForm({ orderItemId }) {
+export default function ReviewForm({ orderItemId, onSuccess }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
 
   const mutation = useMutation({
     mutationFn: () => createReview({ order_item: orderItemId, rating, comment }),
+    onSuccess,
   });
 
   if (mutation.isSuccess) {

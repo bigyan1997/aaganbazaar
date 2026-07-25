@@ -1,6 +1,6 @@
 from django.urls import path
 
-from apps.reviews.views import ProductReviewListView
+from apps.reviews.views import ProductReviewListView, ReviewableOrderItemView
 
 from . import views
 
@@ -19,5 +19,10 @@ urlpatterns = [
         "products/<slug:product_slug>/reviews/",
         ProductReviewListView.as_view(),
         name="product-review-list",
+    ),
+    path(
+        "products/<slug:product_slug>/reviewable-item/",
+        ReviewableOrderItemView.as_view(),
+        name="product-reviewable-item",
     ),
 ]
