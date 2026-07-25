@@ -176,6 +176,26 @@ class TestIDOR(BaseAPITest):
         r = self.client.delete(f"/api/reviews/images/{image.id}/")
         self.assertEqual(r.status_code, 404)  # queryset-scoped, not just permission-denied
 
+    def test_cannot_delete_another_users_wishlist_item(self):
+        from apps.wishlist.models import WishlistItem
+
+        owner = self.create_user()
+        product = self.create_product()
+        item = WishlistItem.objects.create(user=owner, product=product)
+        self.authenticate()  # different user
+        r = self.client.delete(f"/api/wishlist/{item.id}/")
+        self.assertEqual(r.status_code, 404)  # queryset-scoped, not just permission-denied
+
+    def test_stock_alert_status_scoped_to_own_subscription(self):
+        from apps.catalog.models import StockAlert
+
+        subscriber = self.create_user()
+        product = self.create_product(stock_quantity=0)
+        StockAlert.objects.create(user=subscriber, product=product)
+        self.authenticate()  # different user, never subscribed
+        r = self.client.get(f"/api/products/{product.slug}/notify-me/")
+        self.assertFalse(r.data["subscribed"])
+
 
 # ─── Mass Assignment ────────────────────────────────────────────────────────────
 

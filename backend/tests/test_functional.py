@@ -4,6 +4,7 @@ code and payload shape for happy-path, auth-required, and common error
 scenarios.
 """
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.test import override_settings
 
@@ -567,3 +568,98 @@ class TestReviewFunctional(BaseAPITest):
 
         r = self.client.delete(f"/api/reviews/images/{image_id}/")
         self.assertEqual(r.status_code, 204)
+
+
+# ─── Wishlist ───────────────────────────────────────────────────────────────────
+
+@override_settings(**TEST_SETTINGS)
+class TestWishlistFunctional(BaseAPITest):
+    def test_wishlist_requires_auth(self):
+        r = self.client.get("/api/wishlist/")
+        self.assertEqual(r.status_code, 401)
+
+    def test_empty_wishlist(self):
+        self.authenticate()
+        r = self.client.get("/api/wishlist/")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data, [])
+
+    def test_add_to_wishlist(self):
+        self.authenticate()
+        product = self.create_product()
+        r = self.client.post("/api/wishlist/", {"product": product.id}, format="json")
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(r.data["product_detail"]["id"], product.id)
+
+    def test_adding_same_product_twice_is_a_no_op(self):
+        self.authenticate()
+        product = self.create_product()
+        self.client.post("/api/wishlist/", {"product": product.id}, format="json")
+        r = self.client.post("/api/wishlist/", {"product": product.id}, format="json")
+        self.assertEqual(r.status_code, 201)
+        r2 = self.client.get("/api/wishlist/")
+        self.assertEqual(len(r2.data), 1)
+
+    def test_remove_from_wishlist(self):
+        self.authenticate()
+        product = self.create_product()
+        r = self.client.post("/api/wishlist/", {"product": product.id}, format="json")
+        item_id = r.data["id"]
+        r = self.client.delete(f"/api/wishlist/{item_id}/")
+        self.assertEqual(r.status_code, 204)
+        r2 = self.client.get("/api/wishlist/")
+        self.assertEqual(r2.data, [])
+
+
+# ─── Stock alerts ───────────────────────────────────────────────────────────────
+
+@override_settings(**TEST_SETTINGS)
+class TestStockAlertFunctional(BaseAPITest):
+    def test_notify_me_requires_auth(self):
+        product = self.create_product(stock_quantity=0)
+        r = self.client.post(f"/api/products/{product.slug}/notify-me/")
+        self.assertEqual(r.status_code, 401)
+
+    def test_cannot_subscribe_to_in_stock_product(self):
+        self.authenticate()
+        product = self.create_product(stock_quantity=5)
+        r = self.client.post(f"/api/products/{product.slug}/notify-me/")
+        self.assertEqual(r.status_code, 400)
+
+    def test_subscribe_and_check_status(self):
+        self.authenticate()
+        product = self.create_product(stock_quantity=0)
+        r = self.client.post(f"/api/products/{product.slug}/notify-me/")
+        self.assertEqual(r.status_code, 201)
+        r2 = self.client.get(f"/api/products/{product.slug}/notify-me/")
+        self.assertTrue(r2.data["subscribed"])
+
+    def test_unsubscribe(self):
+        self.authenticate()
+        product = self.create_product(stock_quantity=0)
+        self.client.post(f"/api/products/{product.slug}/notify-me/")
+        r = self.client.delete(f"/api/products/{product.slug}/notify-me/")
+        self.assertEqual(r.status_code, 204)
+        r2 = self.client.get(f"/api/products/{product.slug}/notify-me/")
+        self.assertFalse(r2.data["subscribed"])
+
+    @patch("apps.catalog.views.notify_back_in_stock")
+    def test_restock_triggers_notification(self, mock_notify):
+        seller = self.create_seller()
+        product = self.create_product(seller=seller, stock_quantity=0)
+        self.authenticate()
+        self.client.post(f"/api/products/{product.slug}/notify-me/")
+
+        self.authenticate(seller.user)
+        r = self.client.patch(f"/api/products/{product.slug}/", {"stock_quantity": 5}, format="json")
+        self.assertEqual(r.status_code, 200)
+        mock_notify.assert_called_once()
+
+    @patch("apps.catalog.views.notify_back_in_stock")
+    def test_restocking_an_already_in_stock_product_does_not_notify(self, mock_notify):
+        seller = self.create_seller()
+        product = self.create_product(seller=seller, stock_quantity=5)
+        self.authenticate(seller.user)
+        r = self.client.patch(f"/api/products/{product.slug}/", {"stock_quantity": 10}, format="json")
+        self.assertEqual(r.status_code, 200)
+        mock_notify.assert_not_called()

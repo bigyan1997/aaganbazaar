@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, Product, ProductImage
+from .models import Category, Product, ProductImage, StockAlert
 
 
 @admin.register(Category)
@@ -23,3 +23,9 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ("name", "seller__store_name")
     prepopulated_fields = {"slug": ("name",)}
     inlines = [ProductImageInline]
+
+
+@admin.register(StockAlert)
+class StockAlertAdmin(admin.ModelAdmin):
+    list_display = ("user", "product", "created_at")
+    search_fields = ("user__email", "product__name")

@@ -1,14 +1,17 @@
 from django.db.models import Avg, Count
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, generics, permissions
-from rest_framework.exceptions import PermissionDenied
+from rest_framework import filters, generics, permissions, status
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.sellers.models import SellerProfile
 
+from .emails import notify_back_in_stock
 from .filters import ProductFilter
-from .models import Category, Product, ProductImage
+from .models import Category, Product, ProductImage, StockAlert
 from .serializers import (
     CategorySerializer,
     ProductDetailSerializer,
@@ -101,6 +104,14 @@ class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
             self.permission_denied(self.request, message="You do not own this product.")
         return obj
 
+    def perform_update(self, serializer):
+        # Captured before serializer.save() mutates the in-memory instance -
+        # at this point it still reflects the row as last fetched from the DB.
+        was_out_of_stock = not serializer.instance.in_stock
+        product = serializer.save()
+        if was_out_of_stock and product.in_stock:
+            notify_back_in_stock(product)
+
 
 class ProductImageListCreateView(generics.ListCreateAPIView):
     serializer_class = ProductImageSerializer
@@ -127,3 +138,30 @@ class ProductImageDeleteView(generics.DestroyAPIView):
 
     def get_queryset(self):
         return ProductImage.objects.filter(product__seller__user=self.request.user)
+
+
+class StockAlertView(APIView):
+    """GET/POST/DELETE /api/products/<slug>/notify-me/ - a buyer's "email
+    me when this is back in stock" subscription for one product."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def _get_product(self):
+        return get_object_or_404(Product, slug=self.kwargs["product_slug"], is_active=True)
+
+    def get(self, request, product_slug):
+        product = self._get_product()
+        subscribed = StockAlert.objects.filter(user=request.user, product=product).exists()
+        return Response({"subscribed": subscribed})
+
+    def post(self, request, product_slug):
+        product = self._get_product()
+        if product.in_stock:
+            raise ValidationError("This product is already in stock.")
+        StockAlert.objects.get_or_create(user=request.user, product=product)
+        return Response({"subscribed": True}, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, product_slug):
+        product = self._get_product()
+        StockAlert.objects.filter(user=request.user, product=product).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

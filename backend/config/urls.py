@@ -30,6 +30,7 @@ urlpatterns = [
     path('api/cart/', include('apps.cart.urls')),
     path('api/orders/', include('apps.orders.urls')),
     path('api/reviews/', include('apps.reviews.urls')),
+    path('api/wishlist/', include('apps.wishlist.urls')),
 ]
 
 # Only serve media files locally - Railway deploy needs a real object store

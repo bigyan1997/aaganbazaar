@@ -7,6 +7,8 @@ import { getProduct, getProductReviews } from "../../api/catalog";
 import { getReviewableOrderItem } from "../../api/reviews";
 import ProductGallery from "../../components/catalog/ProductGallery";
 import StarRating from "../../components/catalog/StarRating";
+import StockAlertButton from "../../components/catalog/StockAlertButton";
+import WishlistButton from "../../components/catalog/WishlistButton";
 import ReviewForm from "../../components/orders/ReviewForm";
 import useAuthStore from "../../store/authStore";
 import { extractErrorMessage } from "../../utils/errors";
@@ -55,7 +57,10 @@ export default function ProductDetailPage() {
         <ProductGallery images={product.images} productName={product.name} />
 
         <div className="flex flex-col gap-3">
-          <h1 className="text-2xl font-semibold text-navy">{product.name}</h1>
+          <div className="flex items-start justify-between gap-2">
+            <h1 className="text-2xl font-semibold text-navy">{product.name}</h1>
+            <WishlistButton productId={product.id} size={20} />
+          </div>
           <p className="text-sm text-navy/60">
             Sold by{" "}
             <Link to={`/sellers/${product.seller_slug}`} className="text-orange hover:underline">
@@ -70,7 +75,7 @@ export default function ProductDetailPage() {
           </p>
           <p className="whitespace-pre-line text-navy/80">{product.description}</p>
 
-          {product.in_stock && (
+          {product.in_stock ? (
             <div className="flex items-center gap-3">
               <input
                 type="number"
@@ -89,6 +94,8 @@ export default function ProductDetailPage() {
                 {addToCart.isPending ? "Adding…" : "Add to Cart"}
               </button>
             </div>
+          ) : (
+            <StockAlertButton slug={slug} />
           )}
           {addToCart.isSuccess && <p className="text-sm text-green-700">Added to cart.</p>}
           {addToCart.isError && <p className="text-sm text-red-600">{extractErrorMessage(addToCart.error)}</p>}

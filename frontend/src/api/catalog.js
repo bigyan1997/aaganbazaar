@@ -22,3 +22,7 @@ export const uploadProductImage = (slug, file, { isPrimary = false, altText = ""
     .then((r) => r.data);
 };
 export const deleteProductImage = (id) => api.delete(`/api/products/images/${id}/`).then((r) => r.data);
+
+export const getStockAlertStatus = (slug) => api.get(`/api/products/${slug}/notify-me/`).then((r) => r.data);
+export const subscribeStockAlert = (slug) => api.post(`/api/products/${slug}/notify-me/`).then((r) => r.data);
+export const unsubscribeStockAlert = (slug) => api.delete(`/api/products/${slug}/notify-me/`).then((r) => r.data);

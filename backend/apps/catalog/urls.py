@@ -25,4 +25,5 @@ urlpatterns = [
         ReviewableOrderItemView.as_view(),
         name="product-reviewable-item",
     ),
+    path("products/<slug:product_slug>/notify-me/", views.StockAlertView.as_view(), name="product-notify-me"),
 ]

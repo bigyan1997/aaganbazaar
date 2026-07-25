@@ -1,4 +1,4 @@
-import { ChevronDown, LogOut, Package, User as UserIcon } from "lucide-react";
+import { ChevronDown, Heart, LogOut, Package, User as UserIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -42,6 +42,14 @@ export default function AccountMenu({ user, onLogout }) {
           >
             <Package size={15} className="text-navy-light" />
             Purchases
+          </Link>
+          <Link
+            to="/wishlist"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-cream"
+          >
+            <Heart size={15} className="text-navy-light" />
+            Wishlist
           </Link>
           <Link
             to="/account"

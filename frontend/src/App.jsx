@@ -24,6 +24,7 @@ import SellerApplyPage from "./pages/seller/SellerApplyPage";
 import SellerDashboardPage from "./pages/seller/SellerDashboardPage";
 import SellerOrdersPage from "./pages/seller/SellerOrdersPage";
 import SellerPublicPage from "./pages/seller/SellerPublicPage";
+import WishlistPage from "./pages/WishlistPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,6 +47,7 @@ function AppRoutes() {
         <Route path="/sellers/:slug" element={<SellerPublicPage />} />
 
         <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
+        <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
         <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
         <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
         <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />

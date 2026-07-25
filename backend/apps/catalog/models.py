@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -71,3 +72,19 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"{self.product.name} image #{self.pk}"
+
+
+class StockAlert(models.Model):
+    """A buyer's request to be emailed once an out-of-stock product is
+    restocked. Cleared out once the notification fires - re-subscribing
+    after that is just a new row, no history worth keeping."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="stock_alerts")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="stock_alerts")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "product")
+
+    def __str__(self):
+        return f"Notify {self.user.email} when {self.product.name} restocks"
