@@ -11,9 +11,12 @@ export const updateProduct = (slug, data) => api.patch(`/api/products/${slug}/`,
 export const deleteProduct = (slug) => api.delete(`/api/products/${slug}/`).then((r) => r.data);
 export const getProductReviews = (slug, params = {}) =>
   api.get(`/api/products/${slug}/reviews/`, { params }).then((r) => r.data);
-export const uploadProductImage = (slug, file) => {
+export const getProductImages = (slug) => api.get(`/api/products/${slug}/images/`).then((r) => r.data);
+export const uploadProductImage = (slug, file, { isPrimary = false, altText = "" } = {}) => {
   const formData = new FormData();
   formData.append("image", file);
+  formData.append("is_primary", isPrimary ? "true" : "false");
+  if (altText) formData.append("alt_text", altText);
   return api
     .post(`/api/products/${slug}/images/`, formData, { headers: { "Content-Type": "multipart/form-data" } })
     .then((r) => r.data);

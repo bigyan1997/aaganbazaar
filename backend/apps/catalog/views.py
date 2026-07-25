@@ -87,6 +87,7 @@ class ProductImageListCreateView(generics.ListCreateAPIView):
     serializer_class = ProductImageSerializer
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
+    pagination_class = None  # a product's own image set is small and bounded - no page wrapper needed
 
     def _get_product(self):
         product = get_object_or_404(Product, slug=self.kwargs["product_slug"])

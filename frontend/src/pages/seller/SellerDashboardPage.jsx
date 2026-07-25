@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ImageIcon } from "lucide-react";
 import { useState } from "react";
 
 import { createProduct, getCategories, getMyProducts, updateProduct } from "../../api/catalog";
+import ProductImageManager from "../../components/seller/ProductImageManager";
 import { extractErrorMessage } from "../../utils/errors";
 
 const inputClass = "w-full rounded border border-navy/20 px-3 py-2 text-sm focus:border-orange focus:outline-none";
@@ -10,6 +12,7 @@ const emptyForm = { category: "", name: "", description: "", price: "", stock_qu
 
 export default function SellerDashboardPage() {
   const [form, setForm] = useState(emptyForm);
+  const [expandedSlug, setExpandedSlug] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: getCategories });
@@ -44,20 +47,47 @@ export default function SellerDashboardPage() {
         ) : products?.results?.length ? (
           <ul className="flex flex-col divide-y divide-navy/10 rounded border border-navy/10">
             {products.results.map((product) => (
-              <li key={product.id} className="flex items-center justify-between gap-2 p-3 text-sm">
-                <div>
-                  <p className="font-medium text-navy">{product.name}</p>
-                  <p className="text-navy/60">
-                    Rs. {product.price} · {product.stock_quantity} in stock
-                  </p>
+              <li key={product.id} className="p-3 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    {product.primary_image ? (
+                      <img
+                        src={product.primary_image}
+                        alt=""
+                        className="h-10 w-10 rounded border border-navy/10 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded border border-navy/10 bg-cream text-navy/40">
+                        <ImageIcon size={16} />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-medium text-navy">{product.name}</p>
+                      <p className="text-navy/60">
+                        Rs. {product.price} · {product.stock_quantity} in stock
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedSlug(expandedSlug === product.slug ? null : product.slug)}
+                      className="rounded border border-navy/20 px-2 py-1 text-xs"
+                    >
+                      {expandedSlug === product.slug ? "Hide images" : "Manage images"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        toggleActiveMutation.mutate({ slug: product.slug, is_active: !product.is_active })
+                      }
+                      className="rounded border border-navy/20 px-2 py-1 text-xs"
+                    >
+                      {product.is_active ? "Deactivate" : "Activate"}
+                    </button>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => toggleActiveMutation.mutate({ slug: product.slug, is_active: !product.is_active })}
-                  className="rounded border border-navy/20 px-2 py-1 text-xs"
-                >
-                  {product.is_active ? "Deactivate" : "Activate"}
-                </button>
+                {expandedSlug === product.slug && <ProductImageManager slug={product.slug} />}
               </li>
             ))}
           </ul>

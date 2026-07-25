@@ -199,6 +199,40 @@ class TestCatalogFunctional(BaseAPITest):
         self.assertIn("From A", names)
         self.assertNotIn("From B", names)
 
+    def test_owner_can_upload_and_list_and_delete_product_image(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        tiny_gif = SimpleUploadedFile(
+            "test.gif", b"GIF87a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,"
+                        b"\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
+            content_type="image/gif",
+        )
+        seller = self.create_seller()
+        product = self.create_product(seller=seller)
+        self.authenticate(seller.user)
+
+        r = self.client.post(
+            f"/api/products/{product.slug}/images/",
+            {"image": tiny_gif, "is_primary": "true"},
+            format="multipart",
+        )
+        self.assertEqual(r.status_code, 201)
+        self.assertTrue(r.data["is_primary"])
+        image_id = r.data["id"]
+
+        # list is a plain array, not paginated - a product's images are a
+        # small bounded set, same reasoning as CategoryListView.
+        r = self.client.get(f"/api/products/{product.slug}/images/")
+        self.assertEqual(r.status_code, 200)
+        self.assertIsInstance(r.data, list)
+        self.assertEqual(len(r.data), 1)
+
+        r = self.client.get("/api/products/?mine=true")
+        self.assertIsNotNone(r.data["results"][0]["primary_image"])
+
+        r = self.client.delete(f"/api/products/images/{image_id}/")
+        self.assertEqual(r.status_code, 204)
+
 
 # ─── Sellers ────────────────────────────────────────────────────────────────────
 
