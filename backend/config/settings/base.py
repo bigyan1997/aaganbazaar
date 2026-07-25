@@ -5,6 +5,7 @@ Every secret or environment-dependent value comes from .env via django-environ.
 """
 from pathlib import Path
 from datetime import timedelta
+from decimal import Decimal
 import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -35,6 +36,11 @@ INSTALLED_APPS = [
     "corsheaders",
     # local apps
     "apps.accounts",
+    "apps.sellers",
+    "apps.catalog",
+    "apps.cart",
+    "apps.orders",
+    "apps.reviews",
 ]
 
 MIDDLEWARE = [
@@ -91,6 +97,9 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
@@ -150,3 +159,9 @@ AUTH_COOKIE_REFRESH = "refresh_token"
 # --- Email (Resend) ---
 RESEND_API_KEY = env("RESEND_API_KEY", default="")
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
+
+# --- Marketplace ---
+# Percentage taken on a sale when a seller doesn't have their own override
+# (SellerProfile.commission_rate). Placeholder - set to an actual figure
+# before launch, this isn't a real competitive/business decision.
+DEFAULT_COMMISSION_RATE = env("DEFAULT_COMMISSION_RATE", default="10.00", cast=Decimal)
