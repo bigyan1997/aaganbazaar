@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     # third party
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     # local apps
     "apps.accounts",
@@ -107,10 +108,8 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 
 # --- REST framework ---
 REST_FRAMEWORK = {
-    # Phase 2 replaces this with cookie-based JWT auth (apps.accounts.authentication.CookieJWTAuthentication).
-    # Left as SessionAuthentication for now so the project boots cleanly in Phase 0/1.
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.SessionAuthentication",
+        "apps.accounts.authentication.CookieJWTAuthentication",
     ),
     # Read access is open by default (product/category browsing shouldn't require
     # login); individual views tighten this to IsAuthenticated for writes/private data.
@@ -147,3 +146,7 @@ SIMPLE_JWT = {
 
 AUTH_COOKIE_ACCESS = "access_token"
 AUTH_COOKIE_REFRESH = "refresh_token"
+
+# --- Email (Resend) ---
+RESEND_API_KEY = env("RESEND_API_KEY", default="")
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
