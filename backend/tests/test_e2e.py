@@ -91,7 +91,7 @@ class TestBuyerPurchaseJourney(BaseAPITest):
         self.client.force_authenticate(user=None)
         r = self.client.get(f"/api/products/{product_slug}/reviews/")
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.data["count"], 1)
+        self.assertEqual(len(r.data), 1)
 
         # 10. Stock reflects the purchase.
         r = self.client.get(f"/api/products/{product_slug}/")

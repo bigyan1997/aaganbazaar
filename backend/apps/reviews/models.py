@@ -24,3 +24,14 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.rating}★ {self.product.name} by {self.buyer.email}"
+
+
+class ReviewImage(models.Model):
+    MAX_PER_REVIEW = 2
+
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name="images")
+    image = models.ImageField(upload_to="reviews/")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Image for review #{self.review_id}"

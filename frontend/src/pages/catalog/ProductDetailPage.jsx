@@ -121,6 +121,18 @@ export default function ProductDetailPage() {
                   <span className="text-orange">{"★".repeat(review.rating)}</span>
                 </div>
                 {review.comment && <p className="mt-1 text-sm text-navy/70">{review.comment}</p>}
+                {review.images?.length > 0 && (
+                  <div className="mt-2 flex gap-2">
+                    {review.images.map((img) => (
+                      <img
+                        key={img.id}
+                        src={img.image}
+                        alt=""
+                        className="h-16 w-16 rounded border border-navy/10 object-cover"
+                      />
+                    ))}
+                  </div>
+                )}
               </li>
             ))}
           </ul>

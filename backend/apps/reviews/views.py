@@ -1,11 +1,14 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.orders.models import OrderItem, SellerOrder
 
-from .models import Review
-from .serializers import ReviewSerializer
+from .models import Review, ReviewImage
+from .serializers import ReviewImageSerializer, ReviewSerializer
 
 
 class ProductReviewListView(generics.ListAPIView):
@@ -13,6 +16,7 @@ class ProductReviewListView(generics.ListAPIView):
 
     serializer_class = ReviewSerializer
     permission_classes = [permissions.AllowAny]
+    pagination_class = None
 
     def get_queryset(self):
         return Review.objects.filter(product__slug=self.kwargs["product_slug"]).select_related("buyer")
@@ -56,3 +60,36 @@ class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Review.objects.filter(buyer=self.request.user)
+
+
+class ReviewImageListCreateView(generics.ListCreateAPIView):
+    """GET/POST /api/reviews/<review_id>/images/ - author only, capped at
+    ReviewImage.MAX_PER_REVIEW so a review can't turn into an image dump."""
+
+    serializer_class = ReviewImageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    pagination_class = None
+
+    def _get_review(self):
+        review = get_object_or_404(Review, pk=self.kwargs["review_id"])
+        if review.buyer_id != self.request.user.id:
+            raise PermissionDenied("You do not own this review.")
+        return review
+
+    def get_queryset(self):
+        return ReviewImage.objects.filter(review=self._get_review())
+
+    def perform_create(self, serializer):
+        review = self._get_review()
+        if review.images.count() >= ReviewImage.MAX_PER_REVIEW:
+            raise ValidationError(f"A review can have at most {ReviewImage.MAX_PER_REVIEW} photos.")
+        serializer.save(review=review)
+
+
+class ReviewImageDeleteView(generics.DestroyAPIView):
+    serializer_class = ReviewImageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return ReviewImage.objects.filter(review__buyer=self.request.user)

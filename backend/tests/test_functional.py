@@ -479,7 +479,7 @@ class TestReviewFunctional(BaseAPITest):
         self.client.force_authenticate(user=None)  # back to anonymous
         r = self.client.get(f"/api/products/{product.slug}/reviews/")
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.data["count"], 1)
+        self.assertEqual(len(r.data), 1)
 
     def test_reviewable_item_requires_auth(self):
         product = self.create_product()
@@ -508,3 +508,62 @@ class TestReviewFunctional(BaseAPITest):
         self.client.post("/api/reviews/", {"order_item": order_item.id, "rating": 5}, format="json")
         r = self.client.get(f"/api/products/{order_item.product.slug}/reviewable-item/")
         self.assertIsNone(r.data["order_item_id"])
+
+    def _make_review(self, buyer):
+        _, _, order_item = self.create_order(buyer=buyer, status="delivered")
+        self.authenticate(buyer)
+        r = self.client.post("/api/reviews/", {"order_item": order_item.id, "rating": 5}, format="json")
+        return r.data["id"]
+
+    def _tiny_gif(self, name="test.gif"):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        return SimpleUploadedFile(
+            name,
+            b"GIF87a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,"
+            b"\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
+            content_type="image/gif",
+        )
+
+    def test_author_can_upload_and_list_review_images(self):
+        buyer = self.create_user()
+        review_id = self._make_review(buyer)
+        self.authenticate(buyer)
+
+        r = self.client.post(f"/api/reviews/{review_id}/images/", {"image": self._tiny_gif()}, format="multipart")
+        self.assertEqual(r.status_code, 201)
+
+        r = self.client.get(f"/api/reviews/{review_id}/images/")
+        self.assertEqual(r.status_code, 200)
+        self.assertIsInstance(r.data, list)
+        self.assertEqual(len(r.data), 1)
+
+    def test_review_image_upload_capped_at_two(self):
+        buyer = self.create_user()
+        review_id = self._make_review(buyer)
+        self.authenticate(buyer)
+
+        self.client.post(f"/api/reviews/{review_id}/images/", {"image": self._tiny_gif("a.gif")}, format="multipart")
+        self.client.post(f"/api/reviews/{review_id}/images/", {"image": self._tiny_gif("b.gif")}, format="multipart")
+        r = self.client.post(
+            f"/api/reviews/{review_id}/images/", {"image": self._tiny_gif("c.gif")}, format="multipart"
+        )
+        self.assertEqual(r.status_code, 400)
+
+    def test_review_image_upload_rejected_for_non_author(self):
+        buyer = self.create_user()
+        review_id = self._make_review(buyer)
+        self.authenticate()  # a different user
+
+        r = self.client.post(f"/api/reviews/{review_id}/images/", {"image": self._tiny_gif()}, format="multipart")
+        self.assertEqual(r.status_code, 403)
+
+    def test_author_can_delete_review_image(self):
+        buyer = self.create_user()
+        review_id = self._make_review(buyer)
+        self.authenticate(buyer)
+        r = self.client.post(f"/api/reviews/{review_id}/images/", {"image": self._tiny_gif()}, format="multipart")
+        image_id = r.data["id"]
+
+        r = self.client.delete(f"/api/reviews/images/{image_id}/")
+        self.assertEqual(r.status_code, 204)

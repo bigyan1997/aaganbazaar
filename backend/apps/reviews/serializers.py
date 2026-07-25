@@ -2,16 +2,23 @@ from rest_framework import serializers
 
 from apps.orders.models import SellerOrder
 
-from .models import Review
+from .models import Review, ReviewImage
+
+
+class ReviewImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReviewImage
+        fields = ("id", "image")
 
 
 class ReviewSerializer(serializers.ModelSerializer):
     buyer_name = serializers.CharField(source="buyer.first_name", read_only=True)
+    images = ReviewImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Review
-        fields = ("id", "product", "buyer_name", "order_item", "rating", "comment", "created_at")
-        read_only_fields = ("id", "product", "buyer_name", "created_at")
+        fields = ("id", "product", "buyer_name", "order_item", "rating", "comment", "images", "created_at")
+        read_only_fields = ("id", "product", "buyer_name", "images", "created_at")
         extra_kwargs = {"order_item": {"write_only": True}}
 
     def validate_order_item(self, value):

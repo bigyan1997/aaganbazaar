@@ -156,6 +156,26 @@ class TestIDOR(BaseAPITest):
         r = self.client.get(f"/api/products/{order_item.product.slug}/reviewable-item/")
         self.assertIsNone(r.data["order_item_id"])
 
+    def test_cannot_delete_another_users_review_image(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        from apps.reviews.models import Review, ReviewImage
+
+        _, _, order_item = self.create_order(status="delivered")
+        buyer = order_item.seller_order.order.buyer
+        review = Review.objects.create(
+            product=order_item.product, buyer=buyer, order_item=order_item, rating=5,
+        )
+        tiny_gif = SimpleUploadedFile(
+            "test.gif", b"GIF87a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,"
+                        b"\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
+            content_type="image/gif",
+        )
+        image = ReviewImage.objects.create(review=review, image=tiny_gif)
+        self.authenticate()  # different user
+        r = self.client.delete(f"/api/reviews/images/{image.id}/")
+        self.assertEqual(r.status_code, 404)  # queryset-scoped, not just permission-denied
+
 
 # ─── Mass Assignment ────────────────────────────────────────────────────────────
 
