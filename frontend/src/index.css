@@ -2,8 +2,12 @@
 
 @theme {
   --color-navy: #12204a;
+  --color-navy-light: #3b4a66;
   --color-orange: #e8551e;
+  --color-orange-dark: #c74313;
   --color-cream: #f2e0d0;
+  --color-cream-dark: #ede3d2;
+  --color-text-muted: #6b7690;
 }
 
 * {

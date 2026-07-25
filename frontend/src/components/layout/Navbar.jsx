@@ -1,9 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Search, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { logout } from "../../api/auth";
 import { getCart } from "../../api/cart";
+import { getCategories } from "../../api/catalog";
+import logo from "../../assets/logo.png";
 import useAuthStore from "../../store/authStore";
 
 export default function Navbar() {
@@ -19,6 +22,7 @@ export default function Navbar() {
     queryFn: getCart,
     enabled: status === "authenticated",
   });
+  const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: getCategories });
   const itemCount = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
 
   const handleSearch = (e) => {
@@ -36,83 +40,96 @@ export default function Navbar() {
     }
   };
 
+  const isSeller = status === "authenticated" && user?.role === "seller";
+
   return (
-    <header className="bg-navy text-cream">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-3">
-        <Link to="/" className="text-xl font-bold text-cream shrink-0">
-          Aaganbazaar
-        </Link>
-
-        <form onSubmit={handleSearch} className="flex min-w-40 flex-1 items-center">
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search products…"
-            className="w-full rounded-l border-0 px-3 py-1.5 text-sm text-navy focus:outline-none"
-          />
-          <button
-            type="submit"
-            className="rounded-r bg-orange px-3 py-1.5 text-sm font-medium text-cream hover:opacity-90"
-          >
-            Search
-          </button>
-        </form>
-
-        <nav className="flex flex-wrap items-center gap-4 text-sm">
-          <Link to="/products" className="hover:text-orange">
-            Products
-          </Link>
-
-          {status === "authenticated" && (
-            <Link to="/cart" className="hover:text-orange">
-              Cart{itemCount > 0 ? ` (${itemCount})` : ""}
-            </Link>
-          )}
-
-          {status === "authenticated" && (
-            <Link to="/orders" className="hover:text-orange">
-              My Orders
-            </Link>
-          )}
-
-          {status === "authenticated" && user?.role === "seller" && (
-            <>
-              <Link to="/seller/dashboard" className="hover:text-orange">
-                My Products
+    <header className="border-b border-cream-dark bg-cream">
+      <div className="mx-auto max-w-5xl px-4">
+        {/* Utility bar */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-cream-dark py-1.5 text-[11px] text-text-muted">
+          <span>नेपाल | English</span>
+          <span className="flex flex-wrap gap-3.5">
+            {status === "authenticated" && (
+              <Link to="/orders" className="hover:text-orange">
+                Track order
               </Link>
-              <Link to="/seller/orders" className="hover:text-orange">
-                Seller Orders
-              </Link>
-            </>
-          )}
-
-          {status === "authenticated" && user?.role !== "seller" && (
-            <Link to="/sell" className="hover:text-orange">
-              Sell on Aaganbazaar
-            </Link>
-          )}
-
-          {status === "authenticated" ? (
-            <>
-              <span className="text-cream/70">Hi, {user?.first_name || user?.email}</span>
-              <button type="button" onClick={handleLogout} className="hover:text-orange">
-                Logout
-              </button>
-            </>
-          ) : (
-            status !== "loading" && (
+            )}
+            {isSeller ? (
               <>
-                <Link to="/login" className="hover:text-orange">
-                  Login
+                <Link to="/seller/dashboard" className="hover:text-orange">
+                  My Products
                 </Link>
-                <Link to="/register" className="hover:text-orange">
-                  Register
+                <Link to="/seller/orders" className="hover:text-orange">
+                  Seller Orders
                 </Link>
               </>
+            ) : (
+              <Link to="/sell" className="hover:text-orange">
+                Sell on AaganBazaar
+              </Link>
+            )}
+          </span>
+        </div>
+
+        {/* Header */}
+        <div className="flex items-center gap-4 py-3">
+          <Link to="/" className="shrink-0">
+            <img src={logo} alt="Aaganbazaar" className="h-10 w-auto" />
+          </Link>
+
+          <form onSubmit={handleSearch} className="flex h-10 flex-1 items-center rounded-lg border border-cream-dark bg-white/70 px-3">
+            <Search size={16} className="text-text-muted" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search for products"
+              className="ml-2 flex-1 border-none bg-transparent text-sm outline-none"
+            />
+          </form>
+
+          <Link to="/cart" className="relative shrink-0 text-navy-light hover:text-orange">
+            <ShoppingCart size={20} />
+            {itemCount > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-orange px-1 text-[10px] font-medium text-white">
+                {itemCount}
+              </span>
+            )}
+          </Link>
+
+          {status === "authenticated" ? (
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cream-dark text-xs font-medium text-navy">
+                {(user?.first_name || user?.email || "?").charAt(0).toUpperCase()}
+              </div>
+              <button type="button" onClick={handleLogout} className="text-xs text-navy-light hover:text-orange">
+                Logout
+              </button>
+            </div>
+          ) : (
+            status !== "loading" && (
+              <div className="flex shrink-0 items-center gap-3 text-sm">
+                <Link to="/login" className="text-navy-light hover:text-orange">
+                  Login
+                </Link>
+                <Link to="/register" className="text-navy-light hover:text-orange">
+                  Register
+                </Link>
+              </div>
             )
           )}
-        </nav>
+        </div>
+
+        {/* Category strip */}
+        {categories?.length > 0 && (
+          <div className="flex gap-4.5 overflow-x-auto whitespace-nowrap border-t border-cream-dark py-2 text-xs text-navy-light">
+            {categories.map((c) => (
+              <Link key={c.id} to={`/products?category__slug=${c.slug}`} className="shrink-0 hover:text-orange">
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </header>
   );

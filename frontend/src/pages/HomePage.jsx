@@ -1,42 +1,179 @@
 import { useQuery } from "@tanstack/react-query";
+import {
+  Baby,
+  Banknote,
+  BookOpen,
+  Coins,
+  Gift,
+  Heart,
+  MapPin,
+  RotateCcw,
+  Shirt,
+  ShoppingBag,
+  Smartphone,
+  Sofa,
+  Sparkles,
+  Store,
+  Truck,
+  Wallet,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
-import { getProducts } from "../api/catalog";
+import { getCategories, getProducts } from "../api/catalog";
 import ProductCard from "../components/catalog/ProductCard";
+import useAuthStore from "../store/authStore";
+
+const CATEGORY_ICONS = [
+  [/grocer/i, ShoppingBag],
+  [/fashion|cloth|wear/i, Shirt],
+  [/electronic|phone|mobile|gadget/i, Smartphone],
+  [/home|kitchen|furnitur/i, Sofa],
+  [/handicraft|gift/i, Gift],
+  [/beauty|cosmetic/i, Sparkles],
+  [/baby|kid/i, Baby],
+  [/book/i, BookOpen],
+];
+
+function iconForCategory(name) {
+  return CATEGORY_ICONS.find(([pattern]) => pattern.test(name))?.[1] ?? Store;
+}
 
 export default function HomePage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["products", { page_size: 8, ordering: "-created_at" }],
-    queryFn: () => getProducts({ page_size: 8, ordering: "-created_at" }),
+  const status = useAuthStore((s) => s.status);
+  const user = useAuthStore((s) => s.user);
+  const isSeller = status === "authenticated" && user?.role === "seller";
+
+  const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: getCategories });
+  const { data: newArrivals, isLoading: loadingNew } = useQuery({
+    queryKey: ["products", { page_size: 5, ordering: "-created_at" }],
+    queryFn: () => getProducts({ page_size: 5, ordering: "-created_at" }),
+  });
+  const { data: bestDeals, isLoading: loadingDeals } = useQuery({
+    queryKey: ["products", { page_size: 5, ordering: "price" }],
+    queryFn: () => getProducts({ page_size: 5, ordering: "price" }),
   });
 
   return (
-    <div className="flex flex-col gap-8">
-      <section className="rounded bg-navy px-6 py-12 text-center text-cream">
-        <h1 className="text-3xl font-semibold sm:text-4xl">Aaganbazaar — किन्नुहोस् नेपाली</h1>
-        <p className="mt-2 text-cream/70">A Nepal-focused marketplace, made for local buyers and sellers.</p>
-        <Link
-          to="/products"
-          className="mt-6 inline-block rounded bg-orange px-5 py-2 font-medium text-cream hover:opacity-90"
-        >
-          Browse Products
-        </Link>
-      </section>
+    <div className="flex flex-col gap-7">
+      {/* Hero */}
+      <div className="flex items-center justify-between rounded-2xl bg-cream-dark p-8">
+        <div>
+          <p className="mb-1.5 text-xl font-medium text-navy">किन्नुहोस् नेपाली</p>
+          <p className="mb-3.5 text-sm text-navy-light">Every purchase supports a local seller</p>
+          <Link
+            to="/products"
+            className="inline-block rounded-lg bg-orange px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-dark"
+          >
+            Start shopping ↗
+          </Link>
+        </div>
+        <Store size={52} className="text-orange" strokeWidth={1.5} />
+      </div>
 
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-navy">New Arrivals</h2>
-        {isLoading ? (
-          <p className="text-navy/60">Loading products…</p>
-        ) : data?.results?.length ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {data.results.map((product) => (
+      {/* Trust row */}
+      <div className="grid grid-cols-2 gap-2.5 text-xs text-navy-light md:grid-cols-4">
+        <div className="flex items-center gap-1.5">
+          <Wallet size={15} className="text-orange" />
+          eSewa and Khalti
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Banknote size={15} className="text-orange" />
+          Cash on delivery
+        </div>
+        <div className="flex items-center gap-1.5">
+          <MapPin size={15} className="text-orange" />
+          Nationwide delivery
+        </div>
+        <div className="flex items-center gap-1.5">
+          <RotateCcw size={15} className="text-orange" />
+          Easy returns
+        </div>
+      </div>
+
+      {/* Shop by category */}
+      {categories?.length > 0 && (
+        <div>
+          <p className="mb-2.5 text-[15px] font-medium text-navy">Shop by category</p>
+          <div className="grid grid-cols-4 gap-2 md:grid-cols-8">
+            {categories.map((c) => {
+              const Icon = iconForCategory(c.name);
+              return (
+                <Link
+                  key={c.id}
+                  to={`/products?category__slug=${c.slug}`}
+                  className="rounded-lg bg-white/60 px-1 py-2.5 text-center hover:bg-white"
+                >
+                  <Icon size={18} className="mx-auto text-orange" strokeWidth={1.75} />
+                  <p className="mt-1.5 text-[10px] text-navy-light">{c.name}</p>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* New arrivals */}
+      <div>
+        <p className="mb-2.5 text-[15px] font-medium text-navy">New Arrivals</p>
+        {loadingNew ? (
+          <p className="text-sm text-navy/60">Loading…</p>
+        ) : newArrivals?.results?.length ? (
+          <div className="grid grid-cols-2 gap-2.5 md:grid-cols-5">
+            {newArrivals.results.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
         ) : (
-          <p className="text-navy/60">No products yet — check back soon.</p>
+          <p className="text-sm text-navy/60">No products yet — check back soon.</p>
         )}
-      </section>
+      </div>
+
+      {/* Best deals */}
+      {bestDeals?.results?.length > 0 && !loadingDeals && (
+        <div>
+          <p className="mb-2.5 text-[15px] font-medium text-navy">Best Deals</p>
+          <div className="grid grid-cols-2 gap-2.5 md:grid-cols-5">
+            {bestDeals.results.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Seller banner */}
+      {!isSeller && (
+        <div className="flex items-center justify-between rounded-2xl bg-navy p-5.5">
+          <div>
+            <p className="mb-1 text-[15px] font-medium text-white">Sell on Aaganbazaar</p>
+            <p className="text-xs text-cream-dark">Lower fees than the big platforms, and your buyers are Nepali</p>
+          </div>
+          <Link to="/sell" className="rounded-lg bg-white px-4.5 py-2 text-xs font-medium text-navy">
+            Become a seller ↗
+          </Link>
+        </div>
+      )}
+
+      {/* Why Aaganbazaar */}
+      <div>
+        <p className="mb-2.5 text-[15px] font-medium text-navy">Why Aaganbazaar</p>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="rounded-lg bg-white/60 p-3.5">
+            <Heart size={20} className="text-orange" />
+            <p className="mb-0.5 mt-2 text-xs font-medium text-navy">Local sellers</p>
+            <p className="text-[11px] text-text-muted">Every shop is Nepal based</p>
+          </div>
+          <div className="rounded-lg bg-white/60 p-3.5">
+            <Coins size={20} className="text-orange" />
+            <p className="mb-0.5 mt-2 text-xs font-medium text-navy">Fair pricing</p>
+            <p className="text-[11px] text-text-muted">Lower fees keep costs down</p>
+          </div>
+          <div className="rounded-lg bg-white/60 p-3.5">
+            <Truck size={20} className="text-orange" />
+            <p className="mb-0.5 mt-2 text-xs font-medium text-navy">Fast delivery</p>
+            <p className="text-[11px] text-text-muted">Even outside the valley</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
