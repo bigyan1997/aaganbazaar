@@ -396,6 +396,15 @@ class TestOrderFunctional(BaseAPITest):
         r = self.client.patch(f"/api/orders/seller/{seller_order.id}/", {"status": "delivered"}, format="json")
         self.assertEqual(r.status_code, 400)
 
+    def test_seller_order_list_filters_by_status(self):
+        seller = self.create_seller()
+        self.create_order(product=self.create_product(seller=seller), status="pending")
+        self.create_order(product=self.create_product(seller=seller), status="delivered")
+        self.authenticate(seller.user)
+        r = self.client.get("/api/orders/seller/?status=pending")
+        self.assertEqual(r.data["count"], 1)
+        self.assertEqual(r.data["results"][0]["status"], "pending")
+
 
 # ─── Reviews ────────────────────────────────────────────────────────────────────
 

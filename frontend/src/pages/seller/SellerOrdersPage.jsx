@@ -22,7 +22,10 @@ function SellerOrderRow({ sellerOrder }) {
 
   const mutation = useMutation({
     mutationFn: () => updateSellerOrder(sellerOrder.id, { status, tracking_number: tracking }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["seller-orders"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["seller-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["seller-orders-pending-count"] });
+    },
   });
 
   return (

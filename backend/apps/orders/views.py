@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.db import transaction
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -10,6 +11,7 @@ from apps.accounts.permissions import IsSeller
 from apps.cart.models import Cart
 from apps.catalog.models import Product
 
+from .emails import send_new_order_email
 from .models import Order, OrderItem, SellerOrder
 from .serializers import CheckoutSerializer, OrderSerializer, SellerOrderSerializer, SellerOrderUpdateSerializer
 
@@ -79,6 +81,12 @@ class CheckoutView(APIView):
                     product.stock_quantity -= item.quantity
                     product.save(update_fields=["stock_quantity"])
 
+                # Deferred until the transaction actually commits - a
+                # checkout that rolls back (e.g. a concurrent stock race
+                # loses) must not notify a seller about an order that
+                # never really happened.
+                transaction.on_commit(lambda so=seller_order: send_new_order_email(so))
+
             cart.items.all().delete()
 
         return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
@@ -106,10 +114,14 @@ class OrderDetailView(generics.RetrieveAPIView):
 
 
 class SellerOrderListView(generics.ListAPIView):
-    """GET /api/orders/seller/ - orders containing this seller's products."""
+    """GET /api/orders/seller/ - orders containing this seller's products.
+    ?status=pending etc. lets the dashboard show a pending-orders count
+    without paging through everything."""
 
     serializer_class = SellerOrderSerializer
     permission_classes = [permissions.IsAuthenticated, IsSeller]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["status"]
 
     def get_queryset(self):
         profile = getattr(self.request.user, "seller_profile", None)

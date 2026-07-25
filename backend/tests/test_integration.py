@@ -5,6 +5,7 @@ signals firing regardless of how the state change was triggered.
 """
 import threading
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.db import IntegrityError, connections
 from django.db.models import ProtectedError
@@ -180,7 +181,8 @@ class TestCheckoutConcurrency(TransactionTestCase):
     single outer transaction, which would make this test meaningless."""
 
     @override_settings(**TEST_SETTINGS)
-    def test_concurrent_checkouts_cannot_oversell_stock(self):
+    @patch("apps.orders.views.send_new_order_email")
+    def test_concurrent_checkouts_cannot_oversell_stock(self, mock_send_email):
         from django.contrib.auth import get_user_model
         from apps.catalog.models import Category, Product
         from apps.sellers.models import SellerProfile
@@ -233,3 +235,8 @@ class TestCheckoutConcurrency(TransactionTestCase):
         self.assertEqual(statuses, [201, 400])
         product.refresh_from_db()
         self.assertEqual(product.stock_quantity, 0)
+
+        # The seller notification is deferred via transaction.on_commit -
+        # it should fire exactly once, for the checkout that actually
+        # committed, not for the one that rolled back.
+        mock_send_email.assert_called_once()

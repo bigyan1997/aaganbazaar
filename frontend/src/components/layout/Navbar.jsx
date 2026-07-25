@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { logout } from "../../api/auth";
 import { getCart } from "../../api/cart";
 import { getCategories } from "../../api/catalog";
+import { getSellerOrders } from "../../api/orders";
 import logoIcon from "../../assets/logo-icon.png";
 import useAuthStore from "../../store/authStore";
 
@@ -25,6 +26,15 @@ export default function Navbar() {
   const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: getCategories });
   const itemCount = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
 
+  const isSeller = status === "authenticated" && user?.role === "seller";
+  const { data: pendingOrders } = useQuery({
+    queryKey: ["seller-orders-pending-count"],
+    queryFn: () => getSellerOrders({ status: "pending" }),
+    enabled: isSeller,
+    refetchInterval: 60000,
+  });
+  const pendingCount = pendingOrders?.count ?? 0;
+
   const handleSearch = (e) => {
     e.preventDefault();
     navigate(search.trim() ? `/products?search=${encodeURIComponent(search.trim())}` : "/products");
@@ -39,8 +49,6 @@ export default function Navbar() {
       navigate("/");
     }
   };
-
-  const isSeller = status === "authenticated" && user?.role === "seller";
 
   return (
     <header className="border-b border-cream-dark bg-cream">
@@ -61,6 +69,11 @@ export default function Navbar() {
                 </Link>
                 <Link to="/seller/orders" className="hover:text-orange">
                   Seller Orders
+                  {pendingCount > 0 && (
+                    <span className="ml-1 rounded-full bg-orange px-1.5 py-0.5 text-[9px] font-semibold text-white">
+                      {pendingCount}
+                    </span>
+                  )}
                 </Link>
               </>
             ) : (
