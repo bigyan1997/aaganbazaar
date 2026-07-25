@@ -50,7 +50,7 @@ function AppRoutes() {
         <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
         <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
         <Route path="/orders/:orderNumber" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
-        <Route path="/sell" element={<ProtectedRoute><SellerApplyPage /></ProtectedRoute>} />
+        <Route path="/sell" element={<SellerApplyPage />} />
         <Route path="/seller/dashboard" element={<SellerRoute><SellerDashboardPage /></SellerRoute>} />
         <Route path="/seller/orders" element={<SellerRoute><SellerOrdersPage /></SellerRoute>} />
 
