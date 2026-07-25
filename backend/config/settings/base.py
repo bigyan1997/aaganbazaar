@@ -17,6 +17,10 @@ environ.Env.read_env(BASE_DIR / ".env")
 # the app fails loudly at startup rather than running with a guessable key.
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 
+# Admin path is configurable so prod can move it off the well-known /admin/
+# to cut down on automated scanner noise.
+ADMIN_URL = env("DJANGO_ADMIN_URL", default="admin/")
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -34,6 +38,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -85,8 +90,20 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --- Security headers (SecurityMiddleware) ---
+SECURE_REFERRER_POLICY = "same-origin"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 
 # --- REST framework ---
 REST_FRAMEWORK = {
@@ -95,17 +112,27 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
     ),
+    # Read access is open by default (product/category browsing shouldn't require
+    # login); individual views tighten this to IsAuthenticated for writes/private data.
     "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ),
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "DEFAULT_PAGINATION_CLASS": "apps.common.pagination.StandardPagination",
     "PAGE_SIZE": 20,
+    # Anon/user rates are a baseline abuse guard on every endpoint. Scoped rates
+    # (login/register/password_reset) exist for apps.accounts.throttles - Phase 2
+    # wires them onto the actual auth views.
     "DEFAULT_THROTTLE_CLASSES": (
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
         "rest_framework.throttling.ScopedRateThrottle",
     ),
     "DEFAULT_THROTTLE_RATES": {
-        "auth": "10/min",
-        "auth_burst": "3/min",
+        "anon": "100/hour",
+        "user": "1000/hour",
+        "login": "5/min",
+        "register": "3/min",
+        "password_reset": "3/hour",
     },
 }
 

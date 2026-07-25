@@ -7,6 +7,8 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS")
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS")
 CORS_ALLOW_CREDENTIALS = True
 
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
+
 # --- HTTPS / transport security ---
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
@@ -23,3 +25,9 @@ AUTH_COOKIE_SAMESITE = "Lax"
 
 # Trust Railway's proxy for correct scheme detection
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Drop the browsable API's HTML forms in prod - JSON only, smaller attack surface.
+REST_FRAMEWORK = {
+    **REST_FRAMEWORK,
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
+}
