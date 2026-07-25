@@ -16,6 +16,7 @@ import ProductDetailPage from "./pages/catalog/ProductDetailPage";
 import ProductsPage from "./pages/catalog/ProductsPage";
 import HomePage from "./pages/HomePage";
 import NotFoundPage from "./pages/NotFoundPage";
+import AccountPage from "./pages/AccountPage";
 import CheckoutPage from "./pages/orders/CheckoutPage";
 import OrderDetailPage from "./pages/orders/OrderDetailPage";
 import OrdersPage from "./pages/orders/OrdersPage";
@@ -44,6 +45,7 @@ function AppRoutes() {
         <Route path="/products/:slug" element={<ProductDetailPage />} />
         <Route path="/sellers/:slug" element={<SellerPublicPage />} />
 
+        <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
         <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
         <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
         <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />

@@ -9,6 +9,7 @@ import { getCategories } from "../../api/catalog";
 import { getSellerOrders } from "../../api/orders";
 import logoIcon from "../../assets/logo-icon.png";
 import useAuthStore from "../../store/authStore";
+import AccountMenu from "./AccountMenu";
 
 export default function Navbar() {
   const status = useAuthStore((s) => s.status);
@@ -112,14 +113,7 @@ export default function Navbar() {
           </Link>
 
           {status === "authenticated" ? (
-            <div className="flex shrink-0 items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cream-dark text-xs font-medium text-navy">
-                {(user?.first_name || user?.email || "?").charAt(0).toUpperCase()}
-              </div>
-              <button type="button" onClick={handleLogout} className="text-xs text-navy-light hover:text-orange">
-                Logout
-              </button>
-            </div>
+            <AccountMenu user={user} onLogout={handleLogout} />
           ) : (
             status !== "loading" && (
               <div className="flex shrink-0 items-center gap-3 text-sm">
