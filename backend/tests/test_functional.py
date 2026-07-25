@@ -165,6 +165,40 @@ class TestCatalogFunctional(BaseAPITest):
         r = self.client.patch(f"/api/products/{product.slug}/", {"price": "1.00"}, format="json")
         self.assertEqual(r.status_code, 403)
 
+    def test_mine_filter_includes_own_inactive_products(self):
+        seller = self.create_seller()
+        self.create_product(seller=seller, name="Mine Active", is_active=True)
+        self.create_product(seller=seller, name="Mine Inactive", is_active=False)
+        self.create_product(name="Someone Else's", is_active=True)  # different seller
+        self.authenticate(seller.user)
+        r = self.client.get("/api/products/?mine=true")
+        names = [p["name"] for p in r.data["results"]]
+        self.assertIn("Mine Active", names)
+        self.assertIn("Mine Inactive", names)
+        self.assertNotIn("Someone Else's", names)
+
+    def test_mine_filter_requires_seller_profile(self):
+        self.authenticate()  # buyer, no seller profile
+        r = self.client.get("/api/products/?mine=true")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["results"], [])
+
+    def test_mine_filter_ignored_for_anonymous(self):
+        self.create_product(name="Public Product", is_active=True)
+        r = self.client.get("/api/products/?mine=true")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("Public Product", [p["name"] for p in r.data["results"]])
+
+    def test_filter_by_seller_slug(self):
+        seller_a = self.create_seller()
+        seller_b = self.create_seller()
+        self.create_product(seller=seller_a, name="From A")
+        self.create_product(seller=seller_b, name="From B")
+        r = self.client.get(f"/api/products/?seller__slug={seller_a.slug}")
+        names = [p["name"] for p in r.data["results"]]
+        self.assertIn("From A", names)
+        self.assertNotIn("From B", names)
+
 
 # ─── Sellers ────────────────────────────────────────────────────────────────────
 

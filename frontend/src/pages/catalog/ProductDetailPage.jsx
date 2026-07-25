@@ -1,0 +1,118 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import { addCartItem } from "../../api/cart";
+import { getProduct, getProductReviews } from "../../api/catalog";
+import useAuthStore from "../../store/authStore";
+import { extractErrorMessage } from "../../utils/errors";
+
+export default function ProductDetailPage() {
+  const { slug } = useParams();
+  const [quantity, setQuantity] = useState(1);
+  const status = useAuthStore((s) => s.status);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const { data: product, isLoading } = useQuery({
+    queryKey: ["product", slug],
+    queryFn: () => getProduct(slug),
+  });
+  const { data: reviews } = useQuery({
+    queryKey: ["product-reviews", slug],
+    queryFn: () => getProductReviews(slug),
+    enabled: Boolean(product),
+  });
+
+  const addToCart = useMutation({
+    mutationFn: () => addCartItem({ product: product.id, quantity }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart"] }),
+  });
+
+  if (isLoading) return <p className="text-navy/60">Loading…</p>;
+  if (!product) return <p className="text-navy/60">Product not found.</p>;
+
+  const handleAddToCart = () => {
+    if (status !== "authenticated") {
+      navigate("/login", { state: { from: { pathname: `/products/${slug}` } } });
+      return;
+    }
+    addToCart.mutate();
+  };
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div className="grid gap-6 sm:grid-cols-2">
+        <div className="flex aspect-square items-center justify-center rounded bg-cream">
+          {product.images?.length ? (
+            <img
+              src={product.images[0].image}
+              alt={product.images[0].alt_text || product.name}
+              className="h-full w-full rounded object-cover"
+            />
+          ) : (
+            <span className="text-navy/40">No image</span>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <h1 className="text-2xl font-semibold text-navy">{product.name}</h1>
+          <p className="text-sm text-navy/60">
+            Sold by{" "}
+            <Link to={`/sellers/${product.seller_slug}`} className="text-orange hover:underline">
+              {product.seller_name}
+            </Link>{" "}
+            · {product.category_name}
+          </p>
+          <p className="text-2xl font-bold text-orange">Rs. {product.price}</p>
+          <p className={product.in_stock ? "text-sm text-navy/70" : "text-sm text-red-600"}>
+            {product.in_stock ? `${product.stock_quantity} in stock` : "Out of stock"}
+          </p>
+          <p className="whitespace-pre-line text-navy/80">{product.description}</p>
+
+          {product.in_stock && (
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                min={1}
+                max={product.stock_quantity}
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
+                className="w-20 rounded border border-navy/20 px-2 py-1.5 text-sm"
+              />
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={addToCart.isPending}
+                className="rounded bg-orange px-4 py-2 font-medium text-cream hover:opacity-90 disabled:opacity-50"
+              >
+                {addToCart.isPending ? "Adding…" : "Add to Cart"}
+              </button>
+            </div>
+          )}
+          {addToCart.isSuccess && <p className="text-sm text-green-700">Added to cart.</p>}
+          {addToCart.isError && <p className="text-sm text-red-600">{extractErrorMessage(addToCart.error)}</p>}
+        </div>
+      </div>
+
+      <section>
+        <h2 className="mb-3 text-lg font-semibold text-navy">Reviews</h2>
+        {reviews?.length ? (
+          <ul className="flex flex-col gap-3">
+            {reviews.map((review) => (
+              <li key={review.id} className="rounded border border-navy/10 p-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-navy">{review.buyer_name}</span>
+                  <span className="text-orange">{"★".repeat(review.rating)}</span>
+                </div>
+                {review.comment && <p className="mt-1 text-sm text-navy/70">{review.comment}</p>}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-navy/60">No reviews yet.</p>
+        )}
+      </section>
+    </div>
+  );
+}

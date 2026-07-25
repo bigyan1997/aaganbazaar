@@ -18,8 +18,11 @@ python manage.py runserver
 ```bash
 cd frontend
 npm install
+echo "VITE_API_URL=http://localhost:8000" > .env
 npm run dev
 ```
+
+Use `http://localhost:8000` (not `127.0.0.1`) - the backend's CORS/cookie config in `config.settings.dev` is scoped to `localhost`, and auth cookies are `SameSite=Lax`, so a `127.0.0.1` mismatch on either side silently drops them.
 
 ## Backend tests
 

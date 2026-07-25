@@ -40,16 +40,19 @@ class CategoryDetailView(generics.RetrieveAPIView):
 class ProductListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ["category__slug"]
+    filterset_fields = ["category__slug", "seller__slug"]
     search_fields = ["name", "description"]
     ordering_fields = ["price", "created_at"]
 
     def get_queryset(self):
-        return (
-            Product.objects.filter(is_active=True)
-            .select_related("seller", "category")
-            .prefetch_related("images")
-        )
+        base = Product.objects.select_related("seller", "category").prefetch_related("images")
+        # ?mine=true - a seller's own dashboard listing, including their
+        # inactive products. Everyone else only ever sees active products;
+        # this never exposes other sellers' inactive listings.
+        if self.request.query_params.get("mine") == "true" and self.request.user.is_authenticated:
+            profile = getattr(self.request.user, "seller_profile", None)
+            return base.filter(seller=profile) if profile else base.none()
+        return base.filter(is_active=True)
 
     def get_serializer_class(self):
         return ProductWriteSerializer if self.request.method == "POST" else ProductListSerializer
