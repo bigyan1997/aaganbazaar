@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { logout } from "../../api/auth";
 import { getCart } from "../../api/cart";
 import { getCategories } from "../../api/catalog";
-import logo from "../../assets/logo.png";
+import logoIcon from "../../assets/logo-icon.png";
 import useAuthStore from "../../store/authStore";
 
 export default function Navbar() {
@@ -73,8 +73,9 @@ export default function Navbar() {
 
         {/* Header */}
         <div className="flex items-center gap-4 py-3">
-          <Link to="/" className="shrink-0">
-            <img src={logo} alt="Aaganbazaar" className="h-10 w-auto" />
+          <Link to="/" className="flex shrink-0 items-center gap-2">
+            <img src={logoIcon} alt="" className="h-11 w-auto" />
+            <span className="text-xl font-bold tracking-tight text-navy">Aaganbazaar</span>
           </Link>
 
           <form onSubmit={handleSearch} className="flex h-10 flex-1 items-center rounded-lg border border-cream-dark bg-white/70 px-3">
