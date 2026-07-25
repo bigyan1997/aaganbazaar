@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django_filters",
     # local apps
     "apps.accounts",
+    "apps.common",
     "apps.sellers",
     "apps.catalog",
     "apps.cart",

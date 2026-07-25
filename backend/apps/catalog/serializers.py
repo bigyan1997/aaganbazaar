@@ -72,7 +72,11 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 class ProductWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ("id", "category", "name", "description", "price", "stock_quantity", "is_active")
+        # slug is read-only here (server-generated) but still returned -
+        # a client creating a product needs it immediately to link to the
+        # new product's page without an extra GET.
+        fields = ("id", "category", "name", "description", "price", "stock_quantity", "is_active", "slug")
+        read_only_fields = ("slug",)
 
     def validate_category(self, value):
         if not value.is_active:
