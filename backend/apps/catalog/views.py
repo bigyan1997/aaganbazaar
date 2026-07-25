@@ -1,3 +1,4 @@
+from django.db.models import Avg, Count
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, generics, permissions
 from rest_framework.exceptions import PermissionDenied
@@ -6,6 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.sellers.models import SellerProfile
 
+from .filters import ProductFilter
 from .models import Category, Product, ProductImage
 from .serializers import (
     CategorySerializer,
@@ -21,6 +23,19 @@ def _require_approved_seller(user):
     if profile is None or profile.status != SellerProfile.Status.APPROVED:
         raise PermissionDenied("You must be an approved seller to do this.")
     return profile
+
+
+def _with_rating_annotations(queryset):
+    # distinct=True on Count guards against row duplication if this
+    # queryset ever picks up another to-many join alongside reviews.
+    # The aggregate annotation drops Product's default `-created_at`
+    # ordering (Django can't guarantee it survives an implicit GROUP BY),
+    # so it's reasserted explicitly - otherwise pagination over this
+    # queryset isn't guaranteed stable across pages. ?ordering=price still
+    # overrides this later via OrderingFilter, which always wins.
+    return queryset.annotate(
+        average_rating=Avg("reviews__rating"), review_count=Count("reviews", distinct=True)
+    ).order_by("-created_at")
 
 
 class CategoryListView(generics.ListAPIView):
@@ -40,12 +55,14 @@ class CategoryDetailView(generics.RetrieveAPIView):
 class ProductListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ["category__slug", "seller__slug"]
+    filterset_class = ProductFilter
     search_fields = ["name", "description"]
     ordering_fields = ["price", "created_at"]
 
     def get_queryset(self):
-        base = Product.objects.select_related("seller", "category").prefetch_related("images")
+        base = _with_rating_annotations(
+            Product.objects.select_related("seller", "category").prefetch_related("images")
+        )
         # ?mine=true - a seller's own dashboard listing, including their
         # inactive products. Everyone else only ever sees active products;
         # this never exposes other sellers' inactive listings.
@@ -65,7 +82,9 @@ class ProductListCreateView(generics.ListCreateAPIView):
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = "slug"
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    queryset = Product.objects.select_related("seller", "category").prefetch_related("images")
+    queryset = _with_rating_annotations(
+        Product.objects.select_related("seller", "category").prefetch_related("images")
+    )
 
     def get_serializer_class(self):
         return ProductWriteSerializer if self.request.method in ("PUT", "PATCH") else ProductDetailSerializer

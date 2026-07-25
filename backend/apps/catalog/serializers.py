@@ -19,6 +19,11 @@ class ProductListSerializer(serializers.ModelSerializer):
     seller_name = serializers.CharField(source="seller.store_name", read_only=True)
     category_name = serializers.CharField(source="category.name", read_only=True)
     primary_image = serializers.SerializerMethodField()
+    # Populated by an annotated queryset (Avg/Count over reviews) in the
+    # view - never computed per-object here, that would be an N+1 query
+    # on every product list page.
+    average_rating = serializers.FloatField(read_only=True)
+    review_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Product
@@ -32,6 +37,8 @@ class ProductListSerializer(serializers.ModelSerializer):
             "seller_name",
             "category_name",
             "primary_image",
+            "average_rating",
+            "review_count",
         )
 
     def get_primary_image(self, obj):
@@ -47,6 +54,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     seller_name = serializers.CharField(source="seller.store_name", read_only=True)
     seller_slug = serializers.CharField(source="seller.slug", read_only=True)
     category_name = serializers.CharField(source="category.name", read_only=True)
+    average_rating = serializers.FloatField(read_only=True)
+    review_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Product
@@ -63,6 +72,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "seller_name",
             "seller_slug",
             "images",
+            "average_rating",
+            "review_count",
             "is_active",
             "created_at",
         )

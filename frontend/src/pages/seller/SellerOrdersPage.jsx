@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { getSellerOrders, updateSellerOrder } from "../../api/orders";
+import OrderTimeline from "../../components/orders/OrderTimeline";
 import { extractErrorMessage } from "../../utils/errors";
 
 // Mirrors apps.orders.serializers.SellerOrderUpdateSerializer._ALLOWED_TRANSITIONS -
@@ -30,9 +31,12 @@ function SellerOrderRow({ sellerOrder }) {
 
   return (
     <li className="rounded border border-navy/10 p-4">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <span className="font-medium text-navy">{sellerOrder.order_number}</span>
         <span className="text-sm text-navy/60">Subtotal: Rs. {sellerOrder.subtotal}</span>
+      </div>
+      <div className="mb-3">
+        <OrderTimeline status={sellerOrder.status} />
       </div>
       <ul className="mb-3 flex flex-col divide-y divide-navy/10 text-sm">
         {sellerOrder.items.map((item) => (

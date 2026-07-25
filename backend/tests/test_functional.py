@@ -199,6 +199,45 @@ class TestCatalogFunctional(BaseAPITest):
         self.assertIn("From A", names)
         self.assertNotIn("From B", names)
 
+    def test_filter_by_price_range(self):
+        self.create_product(name="Cheap", price=Decimal("10.00"))
+        self.create_product(name="Mid", price=Decimal("50.00"))
+        self.create_product(name="Pricey", price=Decimal("200.00"))
+        r = self.client.get("/api/products/?min_price=20&max_price=100")
+        names = [p["name"] for p in r.data["results"]]
+        self.assertEqual(names, ["Mid"])
+
+    def test_filter_in_stock_only(self):
+        self.create_product(name="In Stock", stock_quantity=5)
+        self.create_product(name="Sold Out", stock_quantity=0)
+        r = self.client.get("/api/products/?in_stock=true")
+        names = [p["name"] for p in r.data["results"]]
+        self.assertIn("In Stock", names)
+        self.assertNotIn("Sold Out", names)
+
+    def test_product_list_includes_rating_aggregate(self):
+        from apps.reviews.models import Review
+
+        product = self.create_product(name="Rated Product")
+        buyer1 = self.create_user()
+        buyer2 = self.create_user()
+        _, _, item1 = self.create_order(buyer=buyer1, product=product)
+        _, _, item2 = self.create_order(buyer=buyer2, product=product)
+        Review.objects.create(product=product, buyer=buyer1, order_item=item1, rating=4)
+        Review.objects.create(product=product, buyer=buyer2, order_item=item2, rating=2)
+
+        r = self.client.get("/api/products/")
+        rated = next(p for p in r.data["results"] if p["name"] == "Rated Product")
+        self.assertEqual(rated["average_rating"], 3.0)
+        self.assertEqual(rated["review_count"], 2)
+
+    def test_product_with_no_reviews_has_null_rating(self):
+        self.create_product(name="Unrated Product")
+        r = self.client.get("/api/products/")
+        unrated = next(p for p in r.data["results"] if p["name"] == "Unrated Product")
+        self.assertIsNone(unrated["average_rating"])
+        self.assertEqual(unrated["review_count"], 0)
+
     def test_owner_can_upload_and_list_and_delete_product_image(self):
         from django.core.files.uploadedfile import SimpleUploadedFile
 

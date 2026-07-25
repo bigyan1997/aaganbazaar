@@ -4,6 +4,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { addCartItem } from "../../api/cart";
 import { getProduct, getProductReviews } from "../../api/catalog";
+import ProductGallery from "../../components/catalog/ProductGallery";
+import StarRating from "../../components/catalog/StarRating";
 import useAuthStore from "../../store/authStore";
 import { extractErrorMessage } from "../../utils/errors";
 
@@ -43,17 +45,7 @@ export default function ProductDetailPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="grid gap-6 sm:grid-cols-2">
-        <div className="flex aspect-square items-center justify-center rounded bg-cream">
-          {product.images?.length ? (
-            <img
-              src={product.images[0].image}
-              alt={product.images[0].alt_text || product.name}
-              className="h-full w-full rounded object-cover"
-            />
-          ) : (
-            <span className="text-navy/40">No image</span>
-          )}
-        </div>
+        <ProductGallery images={product.images} productName={product.name} />
 
         <div className="flex flex-col gap-3">
           <h1 className="text-2xl font-semibold text-navy">{product.name}</h1>
@@ -64,6 +56,7 @@ export default function ProductDetailPage() {
             </Link>{" "}
             · {product.category_name}
           </p>
+          <StarRating rating={product.average_rating} count={product.review_count} size={16} />
           <p className="text-2xl font-bold text-orange">Rs. {product.price}</p>
           <p className={product.in_stock ? "text-sm text-navy/70" : "text-sm text-red-600"}>
             {product.in_stock ? `${product.stock_quantity} in stock` : "Out of stock"}

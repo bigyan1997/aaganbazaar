@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 
 import { getOrder } from "../../api/orders";
+import OrderTimeline from "../../components/orders/OrderTimeline";
 import ReviewForm from "../../components/orders/ReviewForm";
 
 export default function OrderDetailPage() {
@@ -42,15 +43,13 @@ export default function OrderDetailPage() {
       <div className="flex flex-col gap-4">
         {order.seller_orders.map((so) => (
           <div key={so.id} className="rounded border border-navy/10 p-4">
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between">
               <span className="font-medium text-navy">{so.seller_name}</span>
-              <span className="rounded bg-cream px-2 py-1 text-xs font-medium uppercase text-navy">
-                {so.status}
-              </span>
+              {so.tracking_number && <span className="text-sm text-navy/60">Tracking: {so.tracking_number}</span>}
             </div>
-            {so.tracking_number && (
-              <p className="mb-2 text-sm text-navy/60">Tracking: {so.tracking_number}</p>
-            )}
+            <div className="mb-3">
+              <OrderTimeline status={so.status} />
+            </div>
             <ul className="flex flex-col divide-y divide-navy/10">
               {so.items.map((item) => (
                 <li key={item.id} className="py-2">
