@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
+    "django_filters",
     # local apps
     "apps.accounts",
     "apps.sellers",
@@ -142,6 +143,11 @@ REST_FRAMEWORK = {
         "register": "3/min",
         "password_reset": "3/hour",
     },
+    "DEFAULT_FILTER_BACKENDS": (
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ),
 }
 
 # --- JWT ---

@@ -25,6 +25,11 @@ urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     path('api/health/', HealthCheckView.as_view(), name='health-check'),
     path('api/auth/', include('apps.accounts.urls')),
+    path('api/sellers/', include('apps.sellers.urls')),
+    path('api/', include('apps.catalog.urls')),
+    path('api/cart/', include('apps.cart.urls')),
+    path('api/orders/', include('apps.orders.urls')),
+    path('api/reviews/', include('apps.reviews.urls')),
 ]
 
 # Only serve media files locally - Railway deploy needs a real object store
