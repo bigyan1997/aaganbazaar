@@ -3,6 +3,7 @@ import { ImageIcon } from "lucide-react";
 import { useState } from "react";
 
 import { applyBulkDiscount, createProduct, getCategories, getMyProducts, updateProduct } from "../../api/catalog";
+import ProductEditForm from "../../components/seller/ProductEditForm";
 import ProductImageManager from "../../components/seller/ProductImageManager";
 import { extractErrorMessage } from "../../utils/errors";
 
@@ -13,6 +14,7 @@ const emptyForm = { category: "", name: "", description: "", price: "", stock_qu
 export default function SellerDashboardPage() {
   const [form, setForm] = useState(emptyForm);
   const [expandedSlug, setExpandedSlug] = useState(null);
+  const [editingSlug, setEditingSlug] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const [discountInput, setDiscountInput] = useState("15");
   const queryClient = useQueryClient();
@@ -142,6 +144,13 @@ export default function SellerDashboardPage() {
                   <div className="flex shrink-0 items-center gap-2">
                     <button
                       type="button"
+                      onClick={() => setEditingSlug(editingSlug === product.slug ? null : product.slug)}
+                      className="rounded border border-navy/20 px-2 py-1 text-xs"
+                    >
+                      {editingSlug === product.slug ? "Close edit" : "Edit"}
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setExpandedSlug(expandedSlug === product.slug ? null : product.slug)}
                       className="rounded border border-navy/20 px-2 py-1 text-xs"
                     >
@@ -158,6 +167,9 @@ export default function SellerDashboardPage() {
                     </button>
                   </div>
                 </div>
+                {editingSlug === product.slug && (
+                  <ProductEditForm product={product} onDone={() => setEditingSlug(null)} />
+                )}
                 {expandedSlug === product.slug && <ProductImageManager slug={product.slug} />}
               </li>
             ))}

@@ -72,7 +72,17 @@ class ProductListCreateView(generics.ListCreateAPIView):
         if self.request.query_params.get("mine") == "true" and self.request.user.is_authenticated:
             profile = getattr(self.request.user, "seller_profile", None)
             return base.filter(seller=profile) if profile else base.none()
-        return base.filter(is_active=True)
+
+        base = base.filter(is_active=True)
+        # Browsing without a search term hides out-of-stock listings - a
+        # buyer scrolling the homepage or a category shouldn't be shown
+        # things they can't buy. Searching by name is different: the buyer
+        # typed an exact product, so it should still turn up (with the
+        # "Out of stock" badge the frontend already renders) rather than
+        # looking like it doesn't exist at all.
+        if not self.request.query_params.get("search"):
+            base = base.filter(stock_quantity__gt=0)
+        return base
 
     def get_serializer_class(self):
         return ProductWriteSerializer if self.request.method == "POST" else ProductListSerializer

@@ -216,6 +216,28 @@ class TestCatalogFunctional(BaseAPITest):
         self.assertIn("In Stock", names)
         self.assertNotIn("Sold Out", names)
 
+    def test_default_browse_excludes_out_of_stock(self):
+        self.create_product(name="Available", stock_quantity=5)
+        self.create_product(name="Sold Out Browse", stock_quantity=0)
+        r = self.client.get("/api/products/")
+        names = [p["name"] for p in r.data["results"]]
+        self.assertIn("Available", names)
+        self.assertNotIn("Sold Out Browse", names)
+
+    def test_search_still_surfaces_out_of_stock(self):
+        self.create_product(name="Sold Out Searchable", stock_quantity=0)
+        r = self.client.get("/api/products/?search=Sold Out Searchable")
+        names = [p["name"] for p in r.data["results"]]
+        self.assertIn("Sold Out Searchable", names)
+
+    def test_mine_filter_includes_out_of_stock(self):
+        seller = self.create_seller()
+        self.create_product(seller=seller, name="Mine Sold Out", stock_quantity=0)
+        self.authenticate(seller.user)
+        r = self.client.get("/api/products/?mine=true")
+        names = [p["name"] for p in r.data["results"]]
+        self.assertIn("Mine Sold Out", names)
+
     def test_product_list_includes_rating_aggregate(self):
         from apps.reviews.models import Review
 
