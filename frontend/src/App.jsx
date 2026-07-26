@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import GuestRoute from "./components/auth/GuestRoute";
@@ -6,25 +7,29 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import SellerRoute from "./components/auth/SellerRoute";
 import Layout from "./components/layout/Layout";
 import useAuthBootstrap from "./hooks/useAuthBootstrap";
-import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
-import LoginPage from "./pages/auth/LoginPage";
-import RegisterPage from "./pages/auth/RegisterPage";
-import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
-import VerifyEmailPage from "./pages/auth/VerifyEmailPage";
-import CartPage from "./pages/cart/CartPage";
-import ProductDetailPage from "./pages/catalog/ProductDetailPage";
-import ProductsPage from "./pages/catalog/ProductsPage";
 import HomePage from "./pages/HomePage";
-import NotFoundPage from "./pages/NotFoundPage";
-import AccountPage from "./pages/AccountPage";
-import CheckoutPage from "./pages/orders/CheckoutPage";
-import OrderDetailPage from "./pages/orders/OrderDetailPage";
-import OrdersPage from "./pages/orders/OrdersPage";
-import SellerApplyPage from "./pages/seller/SellerApplyPage";
-import SellerDashboardPage from "./pages/seller/SellerDashboardPage";
-import SellerOrdersPage from "./pages/seller/SellerOrdersPage";
-import SellerPublicPage from "./pages/seller/SellerPublicPage";
-import WishlistPage from "./pages/WishlistPage";
+
+// Everything but the homepage is lazy - a first-time visitor only ever
+// downloads the JS for the page they actually land on, not the seller
+// dashboard, checkout, auth forms, etc. all at once.
+const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage"));
+const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
+const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
+const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"));
+const VerifyEmailPage = lazy(() => import("./pages/auth/VerifyEmailPage"));
+const CartPage = lazy(() => import("./pages/cart/CartPage"));
+const ProductDetailPage = lazy(() => import("./pages/catalog/ProductDetailPage"));
+const ProductsPage = lazy(() => import("./pages/catalog/ProductsPage"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+const AccountPage = lazy(() => import("./pages/AccountPage"));
+const CheckoutPage = lazy(() => import("./pages/orders/CheckoutPage"));
+const OrderDetailPage = lazy(() => import("./pages/orders/OrderDetailPage"));
+const OrdersPage = lazy(() => import("./pages/orders/OrdersPage"));
+const SellerApplyPage = lazy(() => import("./pages/seller/SellerApplyPage"));
+const SellerDashboardPage = lazy(() => import("./pages/seller/SellerDashboardPage"));
+const SellerOrdersPage = lazy(() => import("./pages/seller/SellerOrdersPage"));
+const SellerPublicPage = lazy(() => import("./pages/seller/SellerPublicPage"));
+const WishlistPage = lazy(() => import("./pages/WishlistPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,36 +40,42 @@ const queryClient = new QueryClient({
   },
 });
 
+function PageFallback() {
+  return <p className="text-navy/60">Loading…</p>;
+}
+
 function AppRoutes() {
   useAuthBootstrap();
 
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/products" element={<ProductsPage />} />
-        <Route path="/products/:slug" element={<ProductDetailPage />} />
-        <Route path="/sellers/:slug" element={<SellerPublicPage />} />
+    <Suspense fallback={<PageFallback />}>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/products/:slug" element={<ProductDetailPage />} />
+          <Route path="/sellers/:slug" element={<SellerPublicPage />} />
 
-        <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
-        <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
-        <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
-        <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
-        <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
-        <Route path="/orders/:orderNumber" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
-        <Route path="/sell" element={<SellerApplyPage />} />
-        <Route path="/seller/dashboard" element={<SellerRoute><SellerDashboardPage /></SellerRoute>} />
-        <Route path="/seller/orders" element={<SellerRoute><SellerOrdersPage /></SellerRoute>} />
+          <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
+          <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
+          <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+          <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+          <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+          <Route path="/orders/:orderNumber" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
+          <Route path="/sell" element={<SellerApplyPage />} />
+          <Route path="/seller/dashboard" element={<SellerRoute><SellerDashboardPage /></SellerRoute>} />
+          <Route path="/seller/orders" element={<SellerRoute><SellerOrdersPage /></SellerRoute>} />
 
-        <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
-        <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
-        <Route path="/verify-email" element={<VerifyEmailPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+          <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
-    </Routes>
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }
 

@@ -145,6 +145,7 @@ export default function ProductDetailPage() {
                         key={img.id}
                         src={img.image}
                         alt=""
+                        loading="lazy"
                         className="h-16 w-16 rounded border border-navy/10 object-cover"
                       />
                     ))}

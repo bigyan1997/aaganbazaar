@@ -30,6 +30,7 @@ export default function ProductsPage() {
         ...(inStock && { in_stock: "true" }),
         page,
       }),
+    staleTime: 1000 * 30,
   });
 
   const updateParam = (key, value) => {

@@ -12,7 +12,12 @@ export default function ProductCard({ product }) {
     >
       <div className="relative flex h-28 items-center justify-center bg-cream">
         {product.primary_image ? (
-          <img src={product.primary_image} alt={product.name} className="h-full w-full object-cover" />
+          <img
+            src={product.primary_image}
+            alt={product.name}
+            loading="lazy"
+            className="h-full w-full object-cover"
+          />
         ) : (
           <ShoppingBag size={22} className="text-navy" strokeWidth={1.75} />
         )}

@@ -30,7 +30,7 @@ export default function ProductGallery({ images, productName }) {
                 i === activeIndex ? "border-orange" : "border-transparent"
               }`}
             >
-              <img src={image.image} alt="" className="h-full w-full object-cover" />
+              <img src={image.image} alt="" loading="lazy" className="h-full w-full object-cover" />
             </button>
           ))}
         </div>

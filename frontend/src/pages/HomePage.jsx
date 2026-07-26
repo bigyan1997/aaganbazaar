@@ -48,10 +48,15 @@ export default function HomePage() {
   const { data: newArrivals, isLoading: loadingNew } = useQuery({
     queryKey: ["products", { page_size: 5, ordering: "-created_at" }],
     queryFn: () => getProducts({ page_size: 5, ordering: "-created_at" }),
+    // Shorter than the global default - a seller deactivating/updating a
+    // product should show up here within half a minute of a buyer
+    // revisiting, not sit stale for the full 5-minute default.
+    staleTime: 1000 * 30,
   });
   const { data: flashDeals, isLoading: loadingDeals } = useQuery({
     queryKey: ["products", { page_size: 5, on_sale: "true", ordering: "-discount_percent" }],
     queryFn: () => getProducts({ page_size: 5, on_sale: "true", ordering: "-discount_percent" }),
+    staleTime: 1000 * 30,
   });
 
   return (
