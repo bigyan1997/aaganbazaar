@@ -14,6 +14,7 @@ import WishlistButton from "../../components/catalog/WishlistButton";
 import ReviewForm from "../../components/orders/ReviewForm";
 import useAuthStore from "../../store/authStore";
 import { extractErrorMessage } from "../../utils/errors";
+import { timeAgo } from "../../utils/time";
 
 export default function ProductDetailPage() {
   const { slug } = useParams();
@@ -189,6 +190,7 @@ export default function ProductDetailPage() {
                   <span className="font-medium text-navy">{review.buyer_name}</span>
                   <span className="text-orange">{"★".repeat(review.rating)}</span>
                 </div>
+                <p className="mt-0.5 text-xs text-navy/50">{timeAgo(review.created_at)}</p>
                 {review.comment && <p className="mt-1 text-sm text-navy/70">{review.comment}</p>}
                 {review.images?.length > 0 && (
                   <div className="mt-2 flex gap-2">
