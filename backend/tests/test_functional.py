@@ -82,6 +82,7 @@ class TestAuthFunctional(BaseAPITest):
             "email_verified": True,
             "given_name": "Goog",
             "family_name": "User",
+            "picture": "https://example.com/photo.jpg",
         }
         r = self.client.post("/api/auth/google/", {"credential": "fake-token"}, format="json")
         self.assertEqual(r.status_code, 200)
@@ -89,6 +90,8 @@ class TestAuthFunctional(BaseAPITest):
         user = User.objects.get(email="newgoogle@test.com")
         self.assertTrue(user.is_email_verified)
         self.assertFalse(user.has_usable_password())
+        self.assertEqual(user.auth_provider, "google")
+        self.assertEqual(user.avatar_url, "https://example.com/photo.jpg")
 
     @patch("apps.accounts.views.google_id_token.verify_oauth2_token")
     def test_google_login_existing_user_logs_in(self, mock_verify):
@@ -98,11 +101,15 @@ class TestAuthFunctional(BaseAPITest):
             "email_verified": True,
             "given_name": "Existing",
             "family_name": "User",
+            "picture": "https://example.com/photo.jpg",
         }
         r = self.client.post("/api/auth/google/", {"credential": "fake-token"}, format="json")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(User.objects.filter(email="existing@test.com").count(), 1)
         self.assertEqual(r.data["id"], existing.id)
+        existing.refresh_from_db()
+        self.assertEqual(existing.auth_provider, "email")
+        self.assertEqual(existing.avatar_url, "")
 
     @patch("apps.accounts.views.google_id_token.verify_oauth2_token")
     def test_google_login_rejects_unverified_email(self, mock_verify):

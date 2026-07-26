@@ -19,11 +19,21 @@ class User(AbstractUser):
         SELLER = "seller", "Seller"
         ADMIN = "admin", "Admin"
 
+    class AuthProvider(models.TextChoices):
+        EMAIL = "email", "Email"
+        GOOGLE = "google", "Google"
+
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.BUYER)
     phone_number = models.CharField(max_length=15, blank=True)
     is_phone_verified = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
+    # Set once at account creation and never changed afterward - reflects
+    # how the account originated, not whether Google has ever been used
+    # to log in since (an email/password account stays "email" even if
+    # the same address later signs in with Google too).
+    auth_provider = models.CharField(max_length=10, choices=AuthProvider.choices, default=AuthProvider.EMAIL)
+    avatar_url = models.URLField(blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

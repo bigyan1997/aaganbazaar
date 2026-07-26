@@ -2,6 +2,8 @@ import { ChevronDown, Heart, LogOut, Package, User as UserIcon } from "lucide-re
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
+import Avatar from "./Avatar";
+
 export default function AccountMenu({ user, onLogout }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -14,8 +16,6 @@ export default function AccountMenu({ user, onLogout }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const initial = (user?.first_name || user?.email || "?").charAt(0).toUpperCase();
-
   return (
     <div ref={ref} className="relative shrink-0">
       <button
@@ -23,9 +23,7 @@ export default function AccountMenu({ user, onLogout }) {
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-1.5 rounded-full py-0.5 pl-0.5 pr-2 hover:bg-cream-dark"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-cream-dark text-xs font-medium text-navy">
-          {initial}
-        </span>
+        <Avatar user={user} size={32} />
         <ChevronDown size={14} className="text-navy-light" />
       </button>
 

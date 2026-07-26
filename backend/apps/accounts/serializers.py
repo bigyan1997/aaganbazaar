@@ -64,6 +64,8 @@ class UserSerializer(serializers.ModelSerializer):
             "phone_number",
             "is_phone_verified",
             "is_email_verified",
+            "auth_provider",
+            "avatar_url",
             "date_joined",
         )
         read_only_fields = fields

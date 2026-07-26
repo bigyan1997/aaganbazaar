@@ -102,6 +102,8 @@ class GoogleLoginView(APIView):
                 first_name=idinfo.get("given_name", ""),
                 last_name=idinfo.get("family_name", ""),
                 is_email_verified=True,
+                auth_provider=User.AuthProvider.GOOGLE,
+                avatar_url=idinfo.get("picture", ""),
             )
             user.set_unusable_password()
             user.save()

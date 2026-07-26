@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { fetchMe, resendVerification } from "../api/auth";
+import Avatar from "../components/layout/Avatar";
 
 const ROLE_LABELS = { buyer: "Buyer", seller: "Seller", admin: "Admin" };
 
@@ -17,8 +18,6 @@ export default function AccountPage() {
   if (isLoading) return <p className="text-navy/60">Loading…</p>;
   if (!user) return null;
 
-  const initial = (user.first_name || user.email || "?").charAt(0).toUpperCase();
-
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-xl font-semibold text-navy">My Account</h1>
@@ -26,14 +25,15 @@ export default function AccountPage() {
       <div className="rounded-lg border border-cream-dark bg-white/60 p-5">
         <p className="mb-4 text-sm font-medium text-navy">My details</p>
         <div className="flex items-center gap-3">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-cream-dark text-lg font-medium text-navy">
-            {initial}
-          </span>
+          <Avatar user={user} size={48} />
           <div>
             <p className="font-medium text-navy">
               {user.first_name} {user.last_name}
             </p>
             <p className="text-sm text-text-muted">{user.email}</p>
+            {user.auth_provider === "google" && (
+              <p className="mt-0.5 text-xs text-navy/50">Signed up with Google</p>
+            )}
           </div>
         </div>
 
