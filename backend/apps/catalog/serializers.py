@@ -69,6 +69,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     seller_name = serializers.CharField(source="seller.store_name", read_only=True)
     seller_slug = serializers.CharField(source="seller.slug", read_only=True)
     category_name = serializers.CharField(source="category.name", read_only=True)
+    category_slug = serializers.CharField(source="category.slug", read_only=True)
     average_rating = serializers.FloatField(read_only=True)
     review_count = serializers.IntegerField(read_only=True)
     sale_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
@@ -87,6 +88,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "in_stock",
             "category",
             "category_name",
+            "category_slug",
             "seller_name",
             "seller_slug",
             "images",
