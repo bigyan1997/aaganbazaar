@@ -62,8 +62,10 @@ class CategoryDetailView(generics.RetrieveAPIView):
     lookup_field = "slug"
 
 
-@method_decorator(cache_page(60), name="dispatch")
 class CategoryDealsView(generics.ListAPIView):
+    # No response caching here (unlike CategoryListView) - a seller
+    # applying/removing a bulk discount should show up on the deals
+    # pages right away, not lag behind by up to a minute.
     # Only categories that currently have at least one live, in-stock,
     # discounted product - so "sellout" tiles/nav links never point at an
     # empty page.

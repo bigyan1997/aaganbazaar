@@ -62,7 +62,7 @@ export default function HomePage() {
   const { data: dealCategories } = useQuery({
     queryKey: ["category-deals"],
     queryFn: getCategoryDeals,
-    staleTime: 1000 * 30,
+    staleTime: 0,
   });
 
   return (

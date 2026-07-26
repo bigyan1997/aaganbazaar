@@ -17,7 +17,7 @@ export default function CategoryDealsPage() {
     queryKey: ["products", { category__slug: categorySlug, on_sale: "true", ordering: "-discount_percent", page }],
     queryFn: () =>
       getProducts({ category__slug: categorySlug, on_sale: "true", ordering: "-discount_percent", page }),
-    staleTime: 1000 * 30,
+    staleTime: 0,
   });
 
   const goToPage = (n) => {

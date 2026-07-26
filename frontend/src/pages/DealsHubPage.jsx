@@ -4,7 +4,11 @@ import { getCategoryDeals } from "../api/catalog";
 import DealCategoryTile from "../components/home/DealCategoryTile";
 
 export default function DealsHubPage() {
-  const { data, isLoading } = useQuery({ queryKey: ["category-deals"], queryFn: getCategoryDeals });
+  const { data, isLoading } = useQuery({
+    queryKey: ["category-deals"],
+    queryFn: getCategoryDeals,
+    staleTime: 0,
+  });
 
   return (
     <div className="flex flex-col gap-4">
