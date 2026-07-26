@@ -57,7 +57,7 @@ export default function BannerCarousel() {
     <img
       src={banner.image}
       alt=""
-      className="h-48 w-full rounded-2xl object-cover sm:h-96 lg:h-172"
+      className="h-48 w-full rounded-2xl object-cover sm:h-72 lg:h-96"
     />
   );
   const internalPath = banner.link_url ? getInternalPath(banner.link_url) : null;
