@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImageIcon } from "lucide-react";
 import { useState } from "react";
 
-import { createProduct, getCategories, getMyProducts, updateProduct } from "../../api/catalog";
+import { applyBulkDiscount, createProduct, getCategories, getMyProducts, updateProduct } from "../../api/catalog";
 import ProductImageManager from "../../components/seller/ProductImageManager";
 import { extractErrorMessage } from "../../utils/errors";
 
@@ -13,6 +13,8 @@ const emptyForm = { category: "", name: "", description: "", price: "", stock_qu
 export default function SellerDashboardPage() {
   const [form, setForm] = useState(emptyForm);
   const [expandedSlug, setExpandedSlug] = useState(null);
+  const [selected, setSelected] = useState(new Set());
+  const [discountInput, setDiscountInput] = useState("15");
   const queryClient = useQueryClient();
 
   const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: getCategories });
@@ -31,6 +33,14 @@ export default function SellerDashboardPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["my-products"] }),
   });
 
+  const bulkDiscountMutation = useMutation({
+    mutationFn: (discountPercent) => applyBulkDiscount([...selected], discountPercent),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-products"] });
+      setSelected(new Set());
+    },
+  });
+
   const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
 
   const handleSubmit = (e) => {
@@ -38,10 +48,54 @@ export default function SellerDashboardPage() {
     createMutation.mutate(form);
   };
 
+  const toggleSelected = (id) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   return (
     <div className="grid gap-8 sm:grid-cols-2">
       <div>
         <h1 className="mb-4 text-xl font-semibold text-navy">My Products</h1>
+
+        {selected.size > 0 && (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded border border-orange/30 bg-orange/5 p-2.5 text-sm">
+            <span className="text-navy">{selected.size} selected</span>
+            <input
+              type="number"
+              min="1"
+              max="99"
+              value={discountInput}
+              onChange={(e) => setDiscountInput(e.target.value)}
+              className="w-16 rounded border border-navy/20 px-2 py-1 text-sm"
+            />
+            <span className="text-navy/60">% off</span>
+            <button
+              type="button"
+              onClick={() => bulkDiscountMutation.mutate(Number(discountInput))}
+              disabled={bulkDiscountMutation.isPending}
+              className="rounded bg-orange px-3 py-1 text-xs font-medium text-cream hover:opacity-90 disabled:opacity-50"
+            >
+              Apply
+            </button>
+            <button
+              type="button"
+              onClick={() => bulkDiscountMutation.mutate(null)}
+              disabled={bulkDiscountMutation.isPending}
+              className="rounded border border-navy/20 px-3 py-1 text-xs text-navy hover:bg-cream"
+            >
+              Remove discount
+            </button>
+            {bulkDiscountMutation.isError && (
+              <p className="w-full text-xs text-red-600">{extractErrorMessage(bulkDiscountMutation.error)}</p>
+            )}
+          </div>
+        )}
+
         {isLoading ? (
           <p className="text-navy/60">Loading…</p>
         ) : products?.results?.length ? (
@@ -50,6 +104,12 @@ export default function SellerDashboardPage() {
               <li key={product.id} className="p-3 text-sm">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(product.id)}
+                      onChange={() => toggleSelected(product.id)}
+                      className="h-4 w-4"
+                    />
                     {product.primary_image ? (
                       <img
                         src={product.primary_image}
@@ -64,7 +124,18 @@ export default function SellerDashboardPage() {
                     <div>
                       <p className="font-medium text-navy">{product.name}</p>
                       <p className="text-navy/60">
-                        Rs. {product.price} · {product.stock_quantity} in stock
+                        {product.discount_percent ? (
+                          <>
+                            <span className="text-orange">Rs. {product.sale_price}</span>{" "}
+                            <span className="line-through">Rs. {product.price}</span>{" "}
+                            <span className="rounded bg-orange/10 px-1 text-orange">
+                              -{product.discount_percent}%
+                            </span>
+                          </>
+                        ) : (
+                          `Rs. ${product.price}`
+                        )}{" "}
+                        · {product.stock_quantity} in stock
                       </p>
                     </div>
                   </div>

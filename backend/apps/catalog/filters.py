@@ -9,10 +9,14 @@ class ProductFilter(django_filters.FilterSet):
     # in_stock isn't a DB column (it's a model @property), so it needs a
     # method filter rather than a plain field lookup.
     in_stock = django_filters.BooleanFilter(method="filter_in_stock")
+    on_sale = django_filters.BooleanFilter(method="filter_on_sale")
 
     class Meta:
         model = Product
-        fields = ["category__slug", "seller__slug", "min_price", "max_price", "in_stock"]
+        fields = ["category__slug", "seller__slug", "min_price", "max_price", "in_stock", "on_sale"]
 
     def filter_in_stock(self, queryset, name, value):
         return queryset.filter(stock_quantity__gt=0) if value else queryset
+
+    def filter_on_sale(self, queryset, name, value):
+        return queryset.filter(discount_percent__isnull=False) if value else queryset

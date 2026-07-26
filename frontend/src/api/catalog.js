@@ -26,3 +26,8 @@ export const deleteProductImage = (id) => api.delete(`/api/products/images/${id}
 export const getStockAlertStatus = (slug) => api.get(`/api/products/${slug}/notify-me/`).then((r) => r.data);
 export const subscribeStockAlert = (slug) => api.post(`/api/products/${slug}/notify-me/`).then((r) => r.data);
 export const unsubscribeStockAlert = (slug) => api.delete(`/api/products/${slug}/notify-me/`).then((r) => r.data);
+
+export const applyBulkDiscount = (productIds, discountPercent) =>
+  api
+    .post("/api/products/bulk-discount/", { product_ids: productIds, discount_percent: discountPercent })
+    .then((r) => r.data);

@@ -50,7 +50,7 @@ class CheckoutView(APIView):
                     )
 
             total_amount = sum(
-                (locked_products[i.product_id].price * i.quantity for i in items), Decimal("0.00")
+                (locked_products[i.product_id].effective_price * i.quantity for i in items), Decimal("0.00")
             )
             order = Order.objects.create(buyer=request.user, total_amount=total_amount, **shipping_and_payment)
 
@@ -61,7 +61,8 @@ class CheckoutView(APIView):
             for seller_items in by_seller.values():
                 seller = seller_items[0].product.seller
                 subtotal = sum(
-                    (locked_products[i.product_id].price * i.quantity for i in seller_items), Decimal("0.00")
+                    (locked_products[i.product_id].effective_price * i.quantity for i in seller_items),
+                    Decimal("0.00"),
                 )
                 seller_order = SellerOrder.objects.create(
                     order=order,
@@ -75,7 +76,7 @@ class CheckoutView(APIView):
                         seller_order=seller_order,
                         product=product,
                         product_name=product.name,
-                        unit_price=product.price,
+                        unit_price=product.effective_price,
                         quantity=item.quantity,
                     )
                     product.stock_quantity -= item.quantity

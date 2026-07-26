@@ -60,7 +60,7 @@ class ProductListCreateView(generics.ListCreateAPIView):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ProductFilter
     search_fields = ["name", "description"]
-    ordering_fields = ["price", "created_at"]
+    ordering_fields = ["price", "created_at", "discount_percent"]
 
     def get_queryset(self):
         base = _with_rating_annotations(
@@ -80,6 +80,33 @@ class ProductListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         profile = _require_approved_seller(self.request.user)
         serializer.save(seller=profile)
+
+
+class ProductBulkDiscountView(APIView):
+    """POST /api/products/bulk-discount/ - a seller selects several of
+    their own listings and applies (or clears, with discount_percent=null)
+    a percent-off discount to all of them in one action. Silently ignores
+    any id in the list that isn't one of the seller's own products, rather
+    than rejecting the whole batch."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        profile = _require_approved_seller(request.user)
+        product_ids = request.data.get("product_ids")
+        if not isinstance(product_ids, list) or not product_ids:
+            raise ValidationError("product_ids must be a non-empty list.")
+
+        discount_percent = request.data.get("discount_percent")
+        if discount_percent is not None and (
+            not isinstance(discount_percent, int) or not (1 <= discount_percent <= 99)
+        ):
+            raise ValidationError("discount_percent must be an integer between 1 and 99, or null to clear it.")
+
+        updated = Product.objects.filter(id__in=product_ids, seller=profile).update(
+            discount_percent=discount_percent
+        )
+        return Response({"updated": updated})
 
 
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):

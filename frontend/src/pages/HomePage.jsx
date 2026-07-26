@@ -48,9 +48,9 @@ export default function HomePage() {
     queryKey: ["products", { page_size: 5, ordering: "-created_at" }],
     queryFn: () => getProducts({ page_size: 5, ordering: "-created_at" }),
   });
-  const { data: bestDeals, isLoading: loadingDeals } = useQuery({
-    queryKey: ["products", { page_size: 5, ordering: "price" }],
-    queryFn: () => getProducts({ page_size: 5, ordering: "price" }),
+  const { data: flashDeals, isLoading: loadingDeals } = useQuery({
+    queryKey: ["products", { page_size: 5, on_sale: "true", ordering: "-discount_percent" }],
+    queryFn: () => getProducts({ page_size: 5, on_sale: "true", ordering: "-discount_percent" }),
   });
 
   return (
@@ -128,12 +128,12 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Best deals */}
-      {bestDeals?.results?.length > 0 && !loadingDeals && (
+      {/* Flash deals */}
+      {flashDeals?.results?.length > 0 && !loadingDeals && (
         <div>
-          <p className="mb-2.5 text-[15px] font-medium text-navy">Best Deals</p>
+          <p className="mb-2.5 text-[15px] font-medium text-navy">Flash Deals</p>
           <div className="grid grid-cols-2 gap-2.5 md:grid-cols-5">
-            {bestDeals.results.map((product) => (
+            {flashDeals.results.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

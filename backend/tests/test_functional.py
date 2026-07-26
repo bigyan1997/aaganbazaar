@@ -273,6 +273,67 @@ class TestCatalogFunctional(BaseAPITest):
         r = self.client.delete(f"/api/products/images/{image_id}/")
         self.assertEqual(r.status_code, 204)
 
+    def test_bulk_discount_applies_to_owned_products_only(self):
+        seller = self.create_seller()
+        mine1 = self.create_product(seller=seller, price=Decimal("200.00"))
+        mine2 = self.create_product(seller=seller, price=Decimal("100.00"))
+        not_mine = self.create_product(price=Decimal("500.00"))
+        self.authenticate(seller.user)
+
+        r = self.client.post(
+            "/api/products/bulk-discount/",
+            {"product_ids": [mine1.id, mine2.id, not_mine.id], "discount_percent": 20},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["updated"], 2)
+
+        mine1.refresh_from_db()
+        not_mine.refresh_from_db()
+        self.assertEqual(mine1.discount_percent, 20)
+        self.assertEqual(str(mine1.sale_price), "160.00")
+        self.assertIsNone(not_mine.discount_percent)
+
+    def test_bulk_discount_clears_with_null(self):
+        seller = self.create_seller()
+        product = self.create_product(seller=seller, discount_percent=30)
+        self.authenticate(seller.user)
+
+        r = self.client.post(
+            "/api/products/bulk-discount/",
+            {"product_ids": [product.id], "discount_percent": None},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 200)
+        product.refresh_from_db()
+        self.assertIsNone(product.discount_percent)
+
+    def test_bulk_discount_rejects_out_of_range_percent(self):
+        seller = self.create_seller()
+        product = self.create_product(seller=seller)
+        self.authenticate(seller.user)
+
+        r = self.client.post(
+            "/api/products/bulk-discount/", {"product_ids": [product.id], "discount_percent": 150}, format="json"
+        )
+        self.assertEqual(r.status_code, 400)
+
+    def test_bulk_discount_requires_approved_seller(self):
+        self.authenticate()  # plain buyer, no seller profile
+        product = self.create_product()
+        r = self.client.post(
+            "/api/products/bulk-discount/", {"product_ids": [product.id], "discount_percent": 10}, format="json"
+        )
+        self.assertEqual(r.status_code, 403)
+
+    def test_on_sale_filter(self):
+        self.create_product(name="On sale item", discount_percent=10)
+        self.create_product(name="Full price item")
+        r = self.client.get("/api/products/?on_sale=true")
+        names = [p["name"] for p in r.data["results"]]
+        self.assertIn("On sale item", names)
+        self.assertNotIn("Full price item", names)
+
 
 # ─── Sellers ────────────────────────────────────────────────────────────────────
 
@@ -341,6 +402,17 @@ class TestCartFunctional(BaseAPITest):
         self.assertEqual(r.status_code, 201)
         self.assertEqual(r.data["line_total"], "100.00")
 
+    def test_add_item_prices_at_discount(self):
+        # unit_price/line_total must reflect the seller's active discount,
+        # not the list price - otherwise the sale shown on the product
+        # page silently doesn't apply at checkout.
+        self.authenticate()
+        product = self.create_product(price=Decimal("200.00"), stock_quantity=5, discount_percent=25)
+        r = self.client.post("/api/cart/items/", {"product": product.id, "quantity": 2}, format="json")
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(r.data["unit_price"], "150.00")
+        self.assertEqual(r.data["line_total"], "300.00")
+
     def test_add_item_over_stock_rejected(self):
         self.authenticate()
         product = self.create_product(stock_quantity=3)
@@ -407,6 +479,16 @@ class TestOrderFunctional(BaseAPITest):
         self.assertEqual(r.data["total_amount"], "400.00")
         product.refresh_from_db()
         self.assertEqual(product.stock_quantity, 3)
+
+    def test_checkout_charges_discounted_price(self):
+        user = self.authenticate()
+        product = self.create_product(price=Decimal("200.00"), stock_quantity=5, discount_percent=25)
+        self.add_to_cart(user, product, quantity=2)
+        r = self.client.post("/api/orders/checkout/", self.CHECKOUT_PAYLOAD, format="json")
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(r.data["total_amount"], "300.00")
+        item = r.data["seller_orders"][0]["items"][0]
+        self.assertEqual(item["unit_price"], "150.00")
 
     def test_order_list_scoped_to_buyer(self):
         user = self.authenticate()

@@ -24,6 +24,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     # on every product list page.
     average_rating = serializers.FloatField(read_only=True)
     review_count = serializers.IntegerField(read_only=True)
+    sale_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = Product
@@ -32,6 +33,8 @@ class ProductListSerializer(serializers.ModelSerializer):
             "name",
             "slug",
             "price",
+            "discount_percent",
+            "sale_price",
             "stock_quantity",
             "in_stock",
             "seller_name",
@@ -56,6 +59,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.name", read_only=True)
     average_rating = serializers.FloatField(read_only=True)
     review_count = serializers.IntegerField(read_only=True)
+    sale_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = Product
@@ -65,6 +69,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "slug",
             "description",
             "price",
+            "discount_percent",
+            "sale_price",
             "stock_quantity",
             "in_stock",
             "category",
@@ -86,7 +92,17 @@ class ProductWriteSerializer(serializers.ModelSerializer):
         # slug is read-only here (server-generated) but still returned -
         # a client creating a product needs it immediately to link to the
         # new product's page without an extra GET.
-        fields = ("id", "category", "name", "description", "price", "stock_quantity", "is_active", "slug")
+        fields = (
+            "id",
+            "category",
+            "name",
+            "description",
+            "price",
+            "stock_quantity",
+            "discount_percent",
+            "is_active",
+            "slug",
+        )
         read_only_fields = ("slug",)
 
     def validate_category(self, value):

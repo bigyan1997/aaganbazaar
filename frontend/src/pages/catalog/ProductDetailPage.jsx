@@ -69,7 +69,17 @@ export default function ProductDetailPage() {
             · {product.category_name}
           </p>
           <StarRating rating={product.average_rating} count={product.review_count} size={16} />
-          <p className="text-2xl font-bold text-orange">Rs. {product.price}</p>
+          {product.discount_percent ? (
+            <div className="flex items-center gap-2">
+              <p className="text-2xl font-bold text-orange">Rs. {product.sale_price}</p>
+              <p className="text-sm text-navy-light line-through">Rs. {product.price}</p>
+              <span className="rounded bg-orange px-1.5 py-0.5 text-xs font-medium text-white">
+                -{product.discount_percent}%
+              </span>
+            </div>
+          ) : (
+            <p className="text-2xl font-bold text-orange">Rs. {product.price}</p>
+          )}
           <p className={product.in_stock ? "text-sm text-navy/70" : "text-sm text-red-600"}>
             {product.in_stock ? `${product.stock_quantity} in stock` : "Out of stock"}
           </p>

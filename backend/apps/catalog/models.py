@@ -1,5 +1,7 @@
+from decimal import Decimal
+
 from django.conf import settings
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from apps.common.utils import unique_slug_for
@@ -40,6 +42,12 @@ class Product(models.Model):
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     stock_quantity = models.PositiveIntegerField(default=0)
+    # Seller-applied markdown, e.g. 15 for "15% off". Null means no active
+    # discount - stays on until the seller clears it themselves, there's no
+    # scheduled expiry.
+    discount_percent = models.PositiveSmallIntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(99)]
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -58,6 +66,19 @@ class Product(models.Model):
     @property
     def in_stock(self):
         return self.stock_quantity > 0
+
+    @property
+    def sale_price(self):
+        if not self.discount_percent:
+            return None
+        return (self.price * (Decimal(100 - self.discount_percent) / Decimal(100))).quantize(Decimal("0.01"))
+
+    @property
+    def effective_price(self):
+        # What the buyer actually pays - cart/checkout must always read
+        # this, never .price directly, or a discount would show on the
+        # product page but silently not apply at checkout.
+        return self.sale_price or self.price
 
 
 class ProductImage(models.Model):

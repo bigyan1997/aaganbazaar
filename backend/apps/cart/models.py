@@ -31,4 +31,4 @@ class CartItem(models.Model):
 
     @property
     def line_total(self):
-        return self.product.price * self.quantity
+        return self.product.effective_price * self.quantity

@@ -17,6 +17,11 @@ export default function ProductCard({ product }) {
           <ShoppingBag size={22} className="text-navy" strokeWidth={1.75} />
         )}
         <WishlistButton productId={product.id} size={14} className="absolute right-1.5 top-1.5" />
+        {product.discount_percent && (
+          <span className="absolute left-1.5 top-1.5 rounded bg-orange px-1.5 py-0.5 text-[10px] font-medium text-white">
+            -{product.discount_percent}%
+          </span>
+        )}
       </div>
       <div className="p-2.5">
         <p className="mb-1 line-clamp-2 text-xs text-navy-light">{product.name}</p>
@@ -26,7 +31,14 @@ export default function ProductCard({ product }) {
           </div>
         )}
         <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-navy">Rs. {product.price}</p>
+          {product.discount_percent ? (
+            <p className="flex items-center gap-1.5">
+              <span className="text-sm font-medium text-orange">Rs. {product.sale_price}</span>
+              <span className="text-xs text-navy-light line-through">Rs. {product.price}</span>
+            </p>
+          ) : (
+            <p className="text-sm font-medium text-navy">Rs. {product.price}</p>
+          )}
           {!product.in_stock && <span className="text-[10px] text-red-600">Out of stock</span>}
         </div>
       </div>

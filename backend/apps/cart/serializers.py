@@ -8,7 +8,9 @@ from .models import Cart, CartItem
 class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source="product.name", read_only=True)
     product_slug = serializers.CharField(source="product.slug", read_only=True)
-    unit_price = serializers.DecimalField(source="product.price", max_digits=10, decimal_places=2, read_only=True)
+    unit_price = serializers.DecimalField(
+        source="product.effective_price", max_digits=10, decimal_places=2, read_only=True
+    )
     line_total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
