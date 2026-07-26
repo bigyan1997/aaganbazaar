@@ -6,11 +6,14 @@ scenarios.
 from decimal import Decimal
 from unittest.mock import patch
 
+from django.contrib.auth import get_user_model
 from django.test import override_settings
 
 from apps.sellers.models import SellerProfile
 
 from .base import BaseAPITest, TEST_SETTINGS
+
+User = get_user_model()
 
 
 # ─── Auth ──────────────────────────────────────────────────────────────────────
@@ -70,6 +73,48 @@ class TestAuthFunctional(BaseAPITest):
 
     def test_login_nonexistent_user(self):
         r = self.login_via_api("nobody@test.com", "AnyPass1234")
+        self.assertEqual(r.status_code, 400)
+
+    @patch("apps.accounts.views.google_id_token.verify_oauth2_token")
+    def test_google_login_creates_new_user(self, mock_verify):
+        mock_verify.return_value = {
+            "email": "newgoogle@test.com",
+            "email_verified": True,
+            "given_name": "Goog",
+            "family_name": "User",
+        }
+        r = self.client.post("/api/auth/google/", {"credential": "fake-token"}, format="json")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("access_token", r.cookies)
+        user = User.objects.get(email="newgoogle@test.com")
+        self.assertTrue(user.is_email_verified)
+        self.assertFalse(user.has_usable_password())
+
+    @patch("apps.accounts.views.google_id_token.verify_oauth2_token")
+    def test_google_login_existing_user_logs_in(self, mock_verify):
+        existing = self.create_user(email="existing@test.com")
+        mock_verify.return_value = {
+            "email": "existing@test.com",
+            "email_verified": True,
+            "given_name": "Existing",
+            "family_name": "User",
+        }
+        r = self.client.post("/api/auth/google/", {"credential": "fake-token"}, format="json")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(User.objects.filter(email="existing@test.com").count(), 1)
+        self.assertEqual(r.data["id"], existing.id)
+
+    @patch("apps.accounts.views.google_id_token.verify_oauth2_token")
+    def test_google_login_rejects_unverified_email(self, mock_verify):
+        mock_verify.return_value = {"email": "unverified@test.com", "email_verified": False}
+        r = self.client.post("/api/auth/google/", {"credential": "fake-token"}, format="json")
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(User.objects.filter(email="unverified@test.com").exists())
+
+    @patch("apps.accounts.views.google_id_token.verify_oauth2_token")
+    def test_google_login_rejects_invalid_credential(self, mock_verify):
+        mock_verify.side_effect = ValueError("bad token")
+        r = self.client.post("/api/auth/google/", {"credential": "garbage"}, format="json")
         self.assertEqual(r.status_code, 400)
 
     def test_me_requires_auth(self):

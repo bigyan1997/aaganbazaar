@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { login } from "../../api/auth";
+import GoogleLoginButton from "../../components/auth/GoogleLoginButton";
 import useAuthStore from "../../store/authStore";
 import { extractErrorMessage } from "../../utils/errors";
 
@@ -15,11 +16,13 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const goToDestination = () => navigate(location.state?.from?.pathname || "/", { replace: true });
+
   const mutation = useMutation({
     mutationFn: login,
     onSuccess: (user) => {
       setUser(user);
-      navigate(location.state?.from?.pathname || "/", { replace: true });
+      goToDestination();
     },
   });
 
@@ -63,6 +66,13 @@ export default function LoginPage() {
           {mutation.isPending ? "Logging in…" : "Log in"}
         </button>
       </form>
+
+      <div className="my-4 flex items-center gap-3 text-xs text-navy/40">
+        <div className="h-px flex-1 bg-cream-dark" />
+        or
+        <div className="h-px flex-1 bg-cream-dark" />
+      </div>
+      <GoogleLoginButton onSuccess={goToDestination} />
 
       <div className="mt-4 flex justify-between text-sm text-navy/70">
         <Link to="/forgot-password" className="hover:text-orange">

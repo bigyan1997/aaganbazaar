@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { register } from "../../api/auth";
+import GoogleLoginButton from "../../components/auth/GoogleLoginButton";
 import useAuthStore from "../../store/authStore";
 import { extractErrorMessage } from "../../utils/errors";
 
@@ -79,6 +80,13 @@ export default function RegisterPage() {
           {mutation.isPending ? "Creating account…" : "Create account"}
         </button>
       </form>
+
+      <div className="my-4 flex items-center gap-3 text-xs text-navy/40">
+        <div className="h-px flex-1 bg-cream-dark" />
+        or
+        <div className="h-px flex-1 bg-cream-dark" />
+      </div>
+      <GoogleLoginButton onSuccess={() => navigate("/", { replace: true })} />
 
       <p className="mt-4 text-sm text-navy/70">
         Already have an account?{" "}

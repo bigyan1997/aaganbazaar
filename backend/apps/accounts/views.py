@@ -3,6 +3,9 @@ from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from google.auth.exceptions import GoogleAuthError
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token as google_id_token
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -16,6 +19,7 @@ from .serializers import (
     PasswordResetRequestSerializer,
     RegisterSerializer,
     UserSerializer,
+    _generate_unique_username,
 )
 from .throttles import LoginRateThrottle, PasswordResetRateThrottle, RegisterRateThrottle
 from .tokens import email_verification_token
@@ -63,6 +67,45 @@ class LoginView(APIView):
         user = authenticate(request, username=email, password=password)
         if user is None:
             return Response({"detail": "Incorrect email or password."}, status=status.HTTP_400_BAD_REQUEST)
+        return _issue_tokens_response(user, UserSerializer(user).data, status.HTTP_200_OK)
+
+
+class GoogleLoginView(APIView):
+    """POST /api/auth/google/ - body: {credential}. `credential` is the
+    ID token Google Identity Services hands back to the frontend after
+    the user picks an account - it's a JWT signed by Google, not something
+    the frontend can forge. verify_oauth2_token checks that signature
+    against Google's public certs plus the issuer/audience/expiry, so a
+    successful return here is as trustworthy as a verified password login."""
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [LoginRateThrottle]
+
+    def post(self, request):
+        credential = request.data.get("credential", "")
+        try:
+            idinfo = google_id_token.verify_oauth2_token(
+                credential, google_requests.Request(), settings.GOOGLE_CLIENT_ID
+            )
+        except (ValueError, GoogleAuthError):
+            return Response({"detail": "Invalid Google credential."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not idinfo.get("email_verified"):
+            return Response({"detail": "Google account email isn't verified."}, status=status.HTTP_400_BAD_REQUEST)
+
+        email = idinfo["email"].lower()
+        user = User.objects.filter(email__iexact=email).first()
+        if user is None:
+            user = User(
+                username=_generate_unique_username(email),
+                email=email,
+                first_name=idinfo.get("given_name", ""),
+                last_name=idinfo.get("family_name", ""),
+                is_email_verified=True,
+            )
+            user.set_unusable_password()
+            user.save()
+
         return _issue_tokens_response(user, UserSerializer(user).data, status.HTTP_200_OK)
 
 

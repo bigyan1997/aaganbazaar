@@ -168,6 +168,11 @@ AUTH_COOKIE_REFRESH = "refresh_token"
 RESEND_API_KEY = env("RESEND_API_KEY", default="")
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
 
+# --- Google Sign-In (Google Identity Services) ---
+# Client ID from console.cloud.google.com - APIs & Services > Credentials.
+# Used to verify that a Google ID token was actually issued for this app.
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
+
 # --- Marketplace ---
 # Percentage taken on a sale when a seller doesn't have their own override
 # (SellerProfile.commission_rate). Placeholder - set to an actual figure
