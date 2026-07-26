@@ -1,17 +1,19 @@
 import { useMutation } from "@tanstack/react-query";
-import { Lock, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { register } from "../../api/auth";
 import logoIcon from "../../assets/logo-icon.png";
 import GoogleLoginButton from "../../components/auth/GoogleLoginButton";
+import PasswordInput from "../../components/auth/PasswordInput";
 import useAuthStore from "../../store/authStore";
 import { extractErrorMessage } from "../../utils/errors";
 
 const inputClass =
   "w-full rounded-lg border border-navy/15 px-3 py-2.5 text-sm focus:border-orange focus:outline-none focus:ring-1 focus:ring-orange";
-const iconInputClass = `${inputClass} pl-10`;
+const iconInputClass = `${inputClass} pl-10 pr-3`;
+const passwordInputClass = `${inputClass} pl-10 pr-10`;
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ email: "", password: "", password2: "", first_name: "", last_name: "" });
@@ -66,30 +68,22 @@ export default function RegisterPage() {
               className={iconInputClass}
             />
           </div>
-          <div className="relative">
-            <Lock size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-navy/40" />
-            <input
-              type="password"
-              required
-              minLength={10}
-              placeholder="Password"
-              value={form.password}
-              onChange={update("password")}
-              className={iconInputClass}
-            />
-          </div>
-          <div className="relative">
-            <Lock size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-navy/40" />
-            <input
-              type="password"
-              required
-              minLength={10}
-              placeholder="Confirm password"
-              value={form.password2}
-              onChange={update("password2")}
-              className={iconInputClass}
-            />
-          </div>
+          <PasswordInput
+            required
+            minLength={10}
+            placeholder="Password"
+            value={form.password}
+            onChange={update("password")}
+            className={passwordInputClass}
+          />
+          <PasswordInput
+            required
+            minLength={10}
+            placeholder="Confirm password"
+            value={form.password2}
+            onChange={update("password2")}
+            className={passwordInputClass}
+          />
 
           {mutation.isError && <p className="text-sm text-red-600">{extractErrorMessage(mutation.error)}</p>}
 

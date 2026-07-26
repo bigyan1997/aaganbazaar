@@ -1,16 +1,17 @@
 import { useMutation } from "@tanstack/react-query";
-import { Lock, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { login } from "../../api/auth";
 import logoIcon from "../../assets/logo-icon.png";
 import GoogleLoginButton from "../../components/auth/GoogleLoginButton";
+import PasswordInput from "../../components/auth/PasswordInput";
 import useAuthStore from "../../store/authStore";
 import { extractErrorMessage } from "../../utils/errors";
 
-const inputClass =
-  "w-full rounded-lg border border-navy/15 py-2.5 pl-10 pr-3 text-sm focus:border-orange focus:outline-none focus:ring-1 focus:ring-orange";
+const inputBaseClass =
+  "w-full rounded-lg border border-navy/15 py-2.5 pl-10 text-sm focus:border-orange focus:outline-none focus:ring-1 focus:ring-orange";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -50,20 +51,16 @@ export default function LoginPage() {
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={inputClass}
+              className={`${inputBaseClass} pr-3`}
             />
           </div>
-          <div className="relative">
-            <Lock size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-navy/40" />
-            <input
-              type="password"
-              required
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={inputClass}
-            />
-          </div>
+          <PasswordInput
+            required
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={`${inputBaseClass} pr-10`}
+          />
 
           {mutation.isError && <p className="text-sm text-red-600">{extractErrorMessage(mutation.error)}</p>}
 
