@@ -7,8 +7,18 @@ import { getBanners } from "../../api/common";
 
 const AUTO_ADVANCE_MS = 5000;
 
-function isExternal(url) {
-  return /^https?:\/\//i.test(url);
+// A same-origin absolute URL (e.g. an admin pasted the full address-bar
+// URL instead of a relative path) should still navigate in-app via
+// react-router, not force a new tab - only a genuinely different origin
+// counts as external.
+function getInternalPath(url) {
+  try {
+    const parsed = new URL(url, window.location.origin);
+    if (parsed.origin !== window.location.origin) return null;
+    return parsed.pathname + parsed.search + parsed.hash;
+  } catch {
+    return null;
+  }
 }
 
 export default function BannerCarousel() {
@@ -44,16 +54,17 @@ export default function BannerCarousel() {
 
   const banner = banners[index % banners.length];
   const image = <img src={banner.image} alt="" className="h-48 w-full rounded-2xl object-cover sm:h-64" />;
+  const internalPath = banner.link_url ? getInternalPath(banner.link_url) : null;
 
   return (
     <div className="relative">
       {banner.link_url ? (
-        isExternal(banner.link_url) ? (
+        internalPath ? (
+          <Link to={internalPath}>{image}</Link>
+        ) : (
           <a href={banner.link_url} target="_blank" rel="noreferrer">
             {image}
           </a>
-        ) : (
-          <Link to={banner.link_url}>{image}</Link>
         )
       ) : (
         image
