@@ -49,6 +49,15 @@ class TestBrokenAuthentication(BaseAPITest):
         r = self.client.get("/api/auth/me/")
         self.assertEqual(r.status_code, 401)
 
+    def test_tampered_cookie_does_not_block_public_endpoints(self):
+        """A stale/invalid access_token cookie must be treated as no
+        credentials, not a hard auth failure - otherwise anyone with a
+        dead cookie gets locked out of AllowAny endpoints like browsing
+        products, which have nothing to do with being logged in."""
+        self.client.cookies["access_token"] = "not.a.real.jwt"
+        self.assertEqual(self.client.get("/api/categories/").status_code, 200)
+        self.assertEqual(self.client.get("/api/products/").status_code, 200)
+
     def test_forged_jwt_signature_rejected(self):
         # Well-formed JWT shape, wrong signature - must not be trusted.
         forged = (

@@ -24,7 +24,9 @@ api.interceptors.response.use(
     const { config, response } = error;
     const status = response?.status;
     const url = config?.url ?? "";
-    const isAuthEndpoint = ["/auth/login", "/auth/register", "/auth/refresh"].some((p) => url.includes(p));
+    const isAuthEndpoint = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/google"].some((p) =>
+      url.includes(p),
+    );
 
     if (status !== 401 || isAuthEndpoint || config._retry) {
       return Promise.reject(error);

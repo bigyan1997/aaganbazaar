@@ -1,5 +1,6 @@
 from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken
 
 
 class CookieJWTAuthentication(JWTAuthentication):
@@ -18,5 +19,15 @@ class CookieJWTAuthentication(JWTAuthentication):
         raw_token = request.COOKIES.get(settings.AUTH_COOKIE_ACCESS)
         if raw_token is None:
             return None
-        validated_token = self.get_validated_token(raw_token)
+        try:
+            validated_token = self.get_validated_token(raw_token)
+        except InvalidToken:
+            # A stale/expired/malformed cookie must not hard-fail the
+            # request - DRF runs authentication before permission checks,
+            # so letting this propagate would 401 even AllowAny endpoints
+            # (product/category browsing) for anyone with a dead cookie.
+            # Treat it the same as no credentials at all; the frontend's
+            # refresh-then-retry flow (api/axios.js) is what actually
+            # recovers a session that's expired but still refreshable.
+            return None
         return self.get_user(validated_token), validated_token
