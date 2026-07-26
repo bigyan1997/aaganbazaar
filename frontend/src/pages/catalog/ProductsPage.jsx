@@ -8,7 +8,7 @@ import ProductCard from "../../components/catalog/ProductCard";
 export default function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const search = searchParams.get("search") || "";
-  const category = searchParams.get("category__slug") || "";
+  const category = searchParams.get("category") || "";
   const ordering = searchParams.get("ordering") || "";
   const minPrice = searchParams.get("min_price") || "";
   const maxPrice = searchParams.get("max_price") || "";
@@ -23,7 +23,7 @@ export default function ProductsPage() {
     queryFn: () =>
       getProducts({
         ...(search && { search }),
-        ...(category && { category__slug: category }),
+        ...(category && { category }),
         ...(ordering && { ordering }),
         ...(minPrice && { min_price: minPrice }),
         ...(maxPrice && { max_price: maxPrice }),
@@ -70,7 +70,7 @@ export default function ProductsPage() {
 
         <select
           value={category}
-          onChange={(e) => updateParam("category__slug", e.target.value)}
+          onChange={(e) => updateParam("category", e.target.value)}
           className="rounded border border-navy/20 px-2 py-1.5 text-sm"
         >
           <option value="">All categories</option>

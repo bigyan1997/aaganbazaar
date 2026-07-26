@@ -100,7 +100,7 @@ export default function HomePage() {
               return (
                 <Link
                   key={c.id}
-                  to={`/products?category__slug=${c.slug}`}
+                  to={`/products?category=${c.slug}`}
                   className="rounded-lg bg-white/60 px-1 py-2.5 text-center hover:bg-white"
                 >
                   <Icon size={18} className="mx-auto text-orange" strokeWidth={1.75} />

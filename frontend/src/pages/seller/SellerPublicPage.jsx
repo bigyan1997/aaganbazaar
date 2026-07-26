@@ -12,8 +12,8 @@ export default function SellerPublicPage() {
     queryFn: () => getSellerPublicProfile(slug),
   });
   const { data: products } = useQuery({
-    queryKey: ["products", { seller__slug: slug }],
-    queryFn: () => getProducts({ seller__slug: slug }),
+    queryKey: ["products", { seller: slug }],
+    queryFn: () => getProducts({ seller: slug }),
     enabled: Boolean(seller),
   });
 

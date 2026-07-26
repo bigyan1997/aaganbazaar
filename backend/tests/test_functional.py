@@ -203,7 +203,7 @@ class TestCatalogFunctional(BaseAPITest):
         seller_b = self.create_seller()
         self.create_product(seller=seller_a, name="From A")
         self.create_product(seller=seller_b, name="From B")
-        r = self.client.get(f"/api/products/?seller__slug={seller_a.slug}")
+        r = self.client.get(f"/api/products/?seller={seller_a.slug}")
         names = [p["name"] for p in r.data["results"]]
         self.assertIn("From A", names)
         self.assertNotIn("From B", names)

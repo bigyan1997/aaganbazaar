@@ -4,6 +4,10 @@ from .models import Product
 
 
 class ProductFilter(django_filters.FilterSet):
+    # Declared explicitly so the public query param is the clean "category"
+    # / "seller" rather than the raw ORM lookup path "category__slug".
+    category = django_filters.CharFilter(field_name="category__slug")
+    seller = django_filters.CharFilter(field_name="seller__slug")
     min_price = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
     max_price = django_filters.NumberFilter(field_name="price", lookup_expr="lte")
     # in_stock isn't a DB column (it's a model @property), so it needs a
@@ -13,7 +17,7 @@ class ProductFilter(django_filters.FilterSet):
 
     class Meta:
         model = Product
-        fields = ["category__slug", "seller__slug", "min_price", "max_price", "in_stock", "on_sale"]
+        fields = ["category", "seller", "min_price", "max_price", "in_stock", "on_sale"]
 
     def filter_in_stock(self, queryset, name, value):
         return queryset.filter(stock_quantity__gt=0) if value else queryset

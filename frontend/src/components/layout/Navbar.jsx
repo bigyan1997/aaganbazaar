@@ -135,7 +135,7 @@ export default function Navbar() {
               Deals
             </Link>
             {categories.map((c) => (
-              <Link key={c.id} to={`/products?category__slug=${c.slug}`} className="shrink-0 hover:text-orange">
+              <Link key={c.id} to={`/products?category=${c.slug}`} className="shrink-0 hover:text-orange">
                 {c.name}
               </Link>
             ))}
