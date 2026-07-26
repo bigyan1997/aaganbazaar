@@ -26,3 +26,21 @@ def send_new_order_email(seller_order):
         f"New order {seller_order.order.order_number} on Aaganbazaar",
         wrap_email("New order received", body),
     )
+
+
+def send_refund_email(seller_order):
+    buyer = seller_order.order.buyer
+    body = f"""
+<p style="font-size:14px;color:#333;line-height:1.7;">Hi {buyer.first_name or buyer.email},</p>
+<p style="font-size:14px;color:#333;line-height:1.7;">
+  Your order <strong>{seller_order.order.order_number}</strong> from {seller_order.seller.store_name}
+  has been marked as refunded.
+</p>
+<p style="font-size:14px;color:#12204A;font-weight:700;">Refund amount: Rs. {seller_order.subtotal}</p>
+{email_button("View order", f"{settings.FRONTEND_URL}/orders/{seller_order.order.order_number}")}
+<p style="font-size:12px;color:#999;">If you paid online, the refund will be processed to your original payment method.</p>"""
+    send_email(
+        buyer.email,
+        f"Refund processed for order {seller_order.order.order_number}",
+        wrap_email("Refund processed", body),
+    )

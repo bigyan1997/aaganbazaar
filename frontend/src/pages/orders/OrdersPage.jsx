@@ -11,6 +11,7 @@ const STATUS_STYLES = {
   shipped: "bg-orange/10 text-orange",
   delivered: "bg-green-100 text-green-700",
   cancelled: "bg-red-100 text-red-700",
+  refunded: "bg-amber-100 text-amber-700",
   mixed: "bg-cream-dark text-navy-light",
 };
 

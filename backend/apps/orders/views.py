@@ -11,7 +11,7 @@ from apps.accounts.permissions import IsSeller
 from apps.cart.models import Cart
 from apps.catalog.models import Product
 
-from .emails import send_new_order_email
+from .emails import send_new_order_email, send_refund_email
 from .models import Order, OrderItem, SellerOrder
 from .serializers import CheckoutSerializer, OrderSerializer, SellerOrderSerializer, SellerOrderUpdateSerializer
 
@@ -140,3 +140,9 @@ class SellerOrderUpdateView(generics.UpdateAPIView):
     def get_queryset(self):
         profile = getattr(self.request.user, "seller_profile", None)
         return SellerOrder.objects.filter(seller=profile) if profile else SellerOrder.objects.none()
+
+    def perform_update(self, serializer):
+        was_refunded = serializer.instance.status == SellerOrder.Status.REFUNDED
+        seller_order = serializer.save()
+        if seller_order.status == SellerOrder.Status.REFUNDED and not was_refunded:
+            send_refund_email(seller_order)

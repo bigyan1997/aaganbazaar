@@ -39,7 +39,9 @@ class SellerOrderSerializer(serializers.ModelSerializer):
 
 class SellerOrderUpdateSerializer(serializers.ModelSerializer):
     """Restricted to what a seller may actually change - forward-only
-    status transitions. Refunds are handled outside this endpoint (admin)."""
+    status transitions. DELIVERED -> REFUNDED is the one exception to
+    "forward-only": it's how a seller records a return/refund handled
+    outside the platform (no online payment gateway integration yet)."""
 
     class Meta:
         model = SellerOrder
@@ -49,6 +51,7 @@ class SellerOrderUpdateSerializer(serializers.ModelSerializer):
         SellerOrder.Status.PENDING: {SellerOrder.Status.CONFIRMED, SellerOrder.Status.CANCELLED},
         SellerOrder.Status.CONFIRMED: {SellerOrder.Status.SHIPPED, SellerOrder.Status.CANCELLED},
         SellerOrder.Status.SHIPPED: {SellerOrder.Status.DELIVERED},
+        SellerOrder.Status.DELIVERED: {SellerOrder.Status.REFUNDED},
     }
 
     def validate_status(self, value):

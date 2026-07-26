@@ -539,6 +539,31 @@ class TestOrderFunctional(BaseAPITest):
         self.assertEqual(r.data["count"], 1)
         self.assertEqual(r.data["results"][0]["status"], "pending")
 
+    @patch("apps.orders.views.send_refund_email")
+    def test_seller_can_refund_a_delivered_order(self, mock_send):
+        seller = self.create_seller()
+        _, seller_order, _ = self.create_order(product=self.create_product(seller=seller), status="delivered")
+        self.authenticate(seller.user)
+        r = self.client.patch(f"/api/orders/seller/{seller_order.id}/", {"status": "refunded"}, format="json")
+        self.assertEqual(r.status_code, 200)
+        mock_send.assert_called_once()
+
+    def test_cannot_refund_a_non_delivered_order(self):
+        seller = self.create_seller()
+        _, seller_order, _ = self.create_order(product=self.create_product(seller=seller), status="pending")
+        self.authenticate(seller.user)
+        r = self.client.patch(f"/api/orders/seller/{seller_order.id}/", {"status": "refunded"}, format="json")
+        self.assertEqual(r.status_code, 400)
+
+    def test_refund_does_not_restore_stock(self):
+        seller = self.create_seller()
+        product = self.create_product(seller=seller, stock_quantity=5)
+        _, seller_order, _ = self.create_order(product=product, quantity=2, status="delivered")
+        self.authenticate(seller.user)
+        self.client.patch(f"/api/orders/seller/{seller_order.id}/", {"status": "refunded"}, format="json")
+        product.refresh_from_db()
+        self.assertEqual(product.stock_quantity, 5)  # unchanged - refunds don't auto-restock
+
 
 # ─── Reviews ────────────────────────────────────────────────────────────────────
 
