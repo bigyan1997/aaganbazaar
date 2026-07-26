@@ -17,10 +17,28 @@ export default function SellerDashboardPage() {
   const [editingSlug, setEditingSlug] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const [discountInput, setDiscountInput] = useState("15");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
 
   const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: getCategories });
-  const { data: products, isLoading } = useQuery({ queryKey: ["my-products"], queryFn: () => getMyProducts() });
+  const { data: products, isLoading } = useQuery({
+    queryKey: ["my-products", { search, page }],
+    queryFn: () => getMyProducts({ ...(search && { search }), page, page_size: 50 }),
+  });
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setSearch(searchInput);
+    setPage(1);
+    setSelected(new Set());
+  };
+
+  const goToPage = (n) => {
+    setPage(n);
+    setSelected(new Set());
+  };
 
   const createMutation = useMutation({
     mutationFn: createProduct,
@@ -63,6 +81,18 @@ export default function SellerDashboardPage() {
     <div className="grid gap-8 sm:grid-cols-2">
       <div>
         <h1 className="mb-4 text-xl font-semibold text-navy">My Products</h1>
+
+        <form onSubmit={handleSearchSubmit} className="mb-3 flex gap-2">
+          <input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search your products"
+            className="flex-1 rounded border border-navy/20 px-3 py-1.5 text-sm"
+          />
+          <button type="submit" className="rounded border border-navy/20 px-3 py-1.5 text-sm hover:bg-cream">
+            Search
+          </button>
+        </form>
 
         {selected.size > 0 && (
           <div className="mb-3 flex flex-wrap items-center gap-2 rounded border border-orange/30 bg-orange/5 p-2.5 text-sm">
@@ -175,7 +205,31 @@ export default function SellerDashboardPage() {
             ))}
           </ul>
         ) : (
-          <p className="text-navy/60">You haven't listed any products yet.</p>
+          <p className="text-navy/60">
+            {search ? `No products match "${search}".` : "You haven't listed any products yet."}
+          </p>
+        )}
+
+        {(products?.next || products?.previous) && (
+          <div className="mt-3 flex items-center justify-center gap-4">
+            <button
+              type="button"
+              disabled={!products?.previous}
+              onClick={() => goToPage(page - 1)}
+              className="rounded border border-navy/20 px-3 py-1.5 text-sm disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-navy/70">Page {page}</span>
+            <button
+              type="button"
+              disabled={!products?.next}
+              onClick={() => goToPage(page + 1)}
+              className="rounded border border-navy/20 px-3 py-1.5 text-sm disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
         )}
       </div>
 
