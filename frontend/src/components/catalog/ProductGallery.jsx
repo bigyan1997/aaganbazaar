@@ -7,7 +7,7 @@ export default function ProductGallery({ images, productName }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex aspect-square items-center justify-center rounded bg-cream">
+      <div className="flex h-96 w-full items-center justify-center rounded bg-cream">
         {active ? (
           <img
             src={active.image}
