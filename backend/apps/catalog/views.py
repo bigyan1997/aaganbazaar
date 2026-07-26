@@ -1,4 +1,4 @@
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Max
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -15,6 +15,7 @@ from .emails import notify_back_in_stock
 from .filters import ProductFilter
 from .models import Category, Product, ProductImage, StockAlert
 from .serializers import (
+    CategoryDealSerializer,
     CategorySerializer,
     ProductDetailSerializer,
     ProductImageSerializer,
@@ -59,6 +60,29 @@ class CategoryDetailView(generics.RetrieveAPIView):
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = "slug"
+
+
+@method_decorator(cache_page(60), name="dispatch")
+class CategoryDealsView(generics.ListAPIView):
+    # Only categories that currently have at least one live, in-stock,
+    # discounted product - so "sellout" tiles/nav links never point at an
+    # empty page.
+    queryset = (
+        Category.objects.filter(
+            is_active=True,
+            products__is_active=True,
+            products__stock_quantity__gt=0,
+            products__discount_percent__isnull=False,
+        )
+        .annotate(
+            deal_count=Count("products", distinct=True),
+            max_discount_percent=Max("products__discount_percent"),
+        )
+        .order_by("display_order", "name")
+    )
+    serializer_class = CategoryDealSerializer
+    permission_classes = [permissions.AllowAny]
+    pagination_class = None
 
 
 class ProductListCreateView(generics.ListCreateAPIView):

@@ -19,9 +19,10 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import { getCategories, getProducts } from "../api/catalog";
+import { getCategories, getCategoryDeals, getProducts } from "../api/catalog";
 import ProductCard from "../components/catalog/ProductCard";
 import BannerCarousel from "../components/home/BannerCarousel";
+import DealCategoryTile from "../components/home/DealCategoryTile";
 import useAuthStore from "../store/authStore";
 
 const CATEGORY_ICONS = [
@@ -56,6 +57,11 @@ export default function HomePage() {
   const { data: flashDeals, isLoading: loadingDeals } = useQuery({
     queryKey: ["products", { page_size: 5, on_sale: "true", ordering: "-discount_percent" }],
     queryFn: () => getProducts({ page_size: 5, on_sale: "true", ordering: "-discount_percent" }),
+    staleTime: 1000 * 30,
+  });
+  const { data: dealCategories } = useQuery({
+    queryKey: ["category-deals"],
+    queryFn: getCategoryDeals,
     staleTime: 1000 * 30,
   });
 
@@ -129,6 +135,23 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-2.5 md:grid-cols-5">
             {flashDeals.results.map((product) => (
               <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Shop deals by category */}
+      {dealCategories?.length > 0 && (
+        <div>
+          <div className="mb-2.5 flex items-center justify-between">
+            <p className="text-[15px] font-medium text-navy">Shop deals by category</p>
+            <Link to="/deals" className="text-xs text-orange hover:underline">
+              See all deals ↗
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5 md:grid-cols-5">
+            {dealCategories.slice(0, 5).map((c) => (
+              <DealCategoryTile key={c.id} category={c} />
             ))}
           </div>
         </div>

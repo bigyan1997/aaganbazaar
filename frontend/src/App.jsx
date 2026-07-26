@@ -20,6 +20,8 @@ const VerifyEmailPage = lazy(() => import("./pages/auth/VerifyEmailPage"));
 const CartPage = lazy(() => import("./pages/cart/CartPage"));
 const ProductDetailPage = lazy(() => import("./pages/catalog/ProductDetailPage"));
 const ProductsPage = lazy(() => import("./pages/catalog/ProductsPage"));
+const DealsHubPage = lazy(() => import("./pages/DealsHubPage"));
+const CategoryDealsPage = lazy(() => import("./pages/CategoryDealsPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const AccountPage = lazy(() => import("./pages/AccountPage"));
 const CheckoutPage = lazy(() => import("./pages/orders/CheckoutPage"));
@@ -49,6 +51,8 @@ function AppRoutes() {
         <Route path="/" element={<HomePage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/:slug" element={<ProductDetailPage />} />
+        <Route path="/deals" element={<DealsHubPage />} />
+        <Route path="/deals/:categorySlug" element={<CategoryDealsPage />} />
         <Route path="/sellers/:slug" element={<SellerPublicPage />} />
 
         <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />

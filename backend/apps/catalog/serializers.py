@@ -9,6 +9,15 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ("id", "name", "slug", "description", "image", "parent", "display_order")
 
 
+class CategoryDealSerializer(serializers.ModelSerializer):
+    deal_count = serializers.IntegerField(read_only=True)
+    max_discount_percent = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Category
+        fields = ("id", "name", "slug", "image", "deal_count", "max_discount_percent")
+
+
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage

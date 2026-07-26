@@ -364,6 +364,26 @@ class TestCatalogFunctional(BaseAPITest):
         self.assertIn("On sale item", names)
         self.assertNotIn("Full price item", names)
 
+    def test_category_deals_only_lists_categories_with_live_discounts(self):
+        electronics = self.create_category(name="Electronics")
+        clothing = self.create_category(name="Clothing")
+        no_deals = self.create_category(name="No Deals")
+        self.create_product(category=electronics, discount_percent=10)
+        self.create_product(category=electronics, discount_percent=40)
+        self.create_product(category=clothing, discount_percent=20)
+        self.create_product(category=no_deals)
+        # Out of stock and inactive discounted products shouldn't count either.
+        self.create_product(category=no_deals, discount_percent=50, stock_quantity=0)
+        self.create_product(category=no_deals, discount_percent=50, is_active=False)
+
+        r = self.client.get("/api/categories/deals/")
+        by_slug = {c["slug"]: c for c in r.data}
+        self.assertIn(electronics.slug, by_slug)
+        self.assertIn(clothing.slug, by_slug)
+        self.assertNotIn(no_deals.slug, by_slug)
+        self.assertEqual(by_slug[electronics.slug]["deal_count"], 2)
+        self.assertEqual(by_slug[electronics.slug]["max_discount_percent"], 40)
+
 
 # ─── Sellers ────────────────────────────────────────────────────────────────────
 

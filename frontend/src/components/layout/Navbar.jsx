@@ -131,6 +131,9 @@ export default function Navbar() {
         {/* Category strip */}
         {categories?.length > 0 && (
           <div className="flex gap-4.5 overflow-x-auto whitespace-nowrap border-t border-cream-dark py-2 text-xs text-navy-light">
+            <Link to="/deals" className="shrink-0 font-medium text-orange hover:text-orange-dark">
+              Deals
+            </Link>
             {categories.map((c) => (
               <Link key={c.id} to={`/products?category__slug=${c.slug}`} className="shrink-0 hover:text-orange">
                 {c.name}

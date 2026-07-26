@@ -2,6 +2,7 @@ import api from "./axios";
 
 export const getCategories = () => api.get("/api/categories/").then((r) => r.data);
 export const getCategory = (slug) => api.get(`/api/categories/${slug}/`).then((r) => r.data);
+export const getCategoryDeals = () => api.get("/api/categories/deals/").then((r) => r.data);
 export const getProducts = (params = {}) => api.get("/api/products/", { params }).then((r) => r.data);
 export const getMyProducts = (params = {}) =>
   api.get("/api/products/", { params: { ...params, mine: "true" } }).then((r) => r.data);
