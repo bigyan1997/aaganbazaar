@@ -19,11 +19,12 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from apps.common.views import HealthCheckView
+from apps.common.views import BannerListView, HealthCheckView
 
 urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     path('api/health/', HealthCheckView.as_view(), name='health-check'),
+    path('api/banners/', BannerListView.as_view(), name='banner-list'),
     path('api/auth/', include('apps.accounts.urls')),
     path('api/sellers/', include('apps.sellers.urls')),
     path('api/', include('apps.catalog.urls')),

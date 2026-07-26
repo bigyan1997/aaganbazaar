@@ -21,6 +21,7 @@ import { Link } from "react-router-dom";
 
 import { getCategories, getProducts } from "../api/catalog";
 import ProductCard from "../components/catalog/ProductCard";
+import BannerCarousel from "../components/home/BannerCarousel";
 import useAuthStore from "../store/authStore";
 
 const CATEGORY_ICONS = [
@@ -55,20 +56,8 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col gap-7">
-      {/* Hero */}
-      <div className="flex items-center justify-between rounded-2xl bg-cream-dark p-8">
-        <div>
-          <p className="mb-1.5 text-xl font-medium text-navy">किन्नुहोस् नेपाली</p>
-          <p className="mb-3.5 text-sm text-navy-light">Every purchase supports a local seller</p>
-          <Link
-            to="/products"
-            className="inline-block rounded-lg bg-orange px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-dark"
-          >
-            Start shopping ↗
-          </Link>
-        </div>
-        <Store size={52} className="text-orange" strokeWidth={1.5} />
-      </div>
+      {/* Hero / admin-managed banner */}
+      <BannerCarousel />
 
       {/* Trust row */}
       <div className="grid grid-cols-2 gap-2.5 text-xs text-navy-light md:grid-cols-4">

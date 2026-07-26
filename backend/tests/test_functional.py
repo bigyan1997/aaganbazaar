@@ -745,3 +745,42 @@ class TestStockAlertFunctional(BaseAPITest):
         r = self.client.patch(f"/api/products/{product.slug}/", {"stock_quantity": 10}, format="json")
         self.assertEqual(r.status_code, 200)
         mock_notify.assert_not_called()
+
+
+# ─── Banners ────────────────────────────────────────────────────────────────────
+
+@override_settings(**TEST_SETTINGS)
+class TestBannerFunctional(BaseAPITest):
+    def _tiny_gif(self, name="banner.gif"):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        return SimpleUploadedFile(
+            name,
+            b"GIF87a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,"
+            b"\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
+            content_type="image/gif",
+        )
+
+    def test_banner_list_is_public_and_unpaginated(self):
+        from apps.common.models import Banner
+
+        Banner.objects.create(image=self._tiny_gif(), display_order=1)
+        r = self.client.get("/api/banners/")
+        self.assertEqual(r.status_code, 200)
+        self.assertIsInstance(r.data, list)
+        self.assertEqual(len(r.data), 1)
+
+    def test_inactive_banner_excluded(self):
+        from apps.common.models import Banner
+
+        Banner.objects.create(image=self._tiny_gif(), is_active=False)
+        r = self.client.get("/api/banners/")
+        self.assertEqual(r.data, [])
+
+    def test_banners_ordered_by_display_order(self):
+        from apps.common.models import Banner
+
+        Banner.objects.create(image=self._tiny_gif("b.gif"), display_order=2)
+        first = Banner.objects.create(image=self._tiny_gif("a.gif"), display_order=1)
+        r = self.client.get("/api/banners/")
+        self.assertEqual(r.data[0]["id"], first.id)
