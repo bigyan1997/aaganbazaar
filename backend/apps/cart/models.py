@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -32,3 +34,9 @@ class CartItem(models.Model):
     @property
     def line_total(self):
         return self.product.effective_price * self.quantity
+
+    @property
+    def savings(self):
+        if not self.product.discount_percent:
+            return Decimal("0.00")
+        return (self.product.price - self.product.effective_price) * self.quantity

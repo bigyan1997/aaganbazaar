@@ -412,6 +412,18 @@ class TestCartFunctional(BaseAPITest):
         self.assertEqual(r.status_code, 201)
         self.assertEqual(r.data["unit_price"], "150.00")
         self.assertEqual(r.data["line_total"], "300.00")
+        self.assertEqual(r.data["list_price"], "200.00")
+        self.assertEqual(r.data["discount_percent"], 25)
+        self.assertEqual(r.data["savings"], "100.00")
+
+    def test_cart_total_savings_sums_discounted_lines(self):
+        user = self.authenticate()
+        discounted = self.create_product(price=Decimal("200.00"), stock_quantity=5, discount_percent=25)
+        full_price = self.create_product(price=Decimal("50.00"), stock_quantity=5)
+        self.add_to_cart(user, discounted, quantity=2)
+        self.add_to_cart(user, full_price, quantity=1)
+        r = self.client.get("/api/cart/")
+        self.assertEqual(r.data["total_savings"], "100.00")
 
     def test_add_item_over_stock_rejected(self):
         self.authenticate()

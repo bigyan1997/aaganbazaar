@@ -116,6 +116,9 @@ export default function CheckoutPage() {
           <span>Total</span>
           <span>Rs. {cart.total}</span>
         </div>
+        {Number(cart.total_savings) > 0 && (
+          <p className="text-right text-sm text-orange">You saved Rs. {cart.total_savings}</p>
+        )}
       </div>
     </div>
   );

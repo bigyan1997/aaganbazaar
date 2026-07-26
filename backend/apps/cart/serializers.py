@@ -11,11 +11,28 @@ class CartItemSerializer(serializers.ModelSerializer):
     unit_price = serializers.DecimalField(
         source="product.effective_price", max_digits=10, decimal_places=2, read_only=True
     )
+    # Original per-unit price and the seller's discount, if any - lets the
+    # cart show a strikethrough price and how much a line item is saving,
+    # not just the already-discounted unit_price.
+    list_price = serializers.DecimalField(source="product.price", max_digits=10, decimal_places=2, read_only=True)
+    discount_percent = serializers.IntegerField(source="product.discount_percent", read_only=True)
     line_total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    savings = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = CartItem
-        fields = ("id", "product", "product_name", "product_slug", "unit_price", "quantity", "line_total")
+        fields = (
+            "id",
+            "product",
+            "product_name",
+            "product_slug",
+            "unit_price",
+            "list_price",
+            "discount_percent",
+            "quantity",
+            "line_total",
+            "savings",
+        )
         extra_kwargs = {"product": {"write_only": True}}
 
     def validate_product(self, value):
@@ -27,10 +44,11 @@ class CartItemSerializer(serializers.ModelSerializer):
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
     total = serializers.SerializerMethodField()
+    total_savings = serializers.SerializerMethodField()
 
     class Meta:
         model = Cart
-        fields = ("id", "items", "total", "updated_at")
+        fields = ("id", "items", "total", "total_savings", "updated_at")
 
     def get_total(self, obj):
         # str(), not the raw Decimal - DRF's JSON encoder renders a bare
@@ -39,3 +57,6 @@ class CartSerializer(serializers.ModelSerializer):
         # is serialized as a string for the same reason.
         total = sum((item.line_total for item in obj.items.all()), Decimal("0.00"))
         return str(total)
+
+    def get_total_savings(self, obj):
+        return str(sum((item.savings for item in obj.items.all()), Decimal("0.00")))

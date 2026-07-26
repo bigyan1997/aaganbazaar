@@ -36,7 +36,17 @@ export default function CartPage() {
             <Link to={`/products/${item.product_slug}`} className="flex-1 font-medium text-navy hover:text-orange">
               {item.product_name}
             </Link>
-            <span className="text-sm text-navy/70">Rs. {item.unit_price} each</span>
+            {item.discount_percent ? (
+              <span className="flex flex-col items-end text-sm">
+                <span className="flex items-center gap-1.5">
+                  <span className="text-navy/70">Rs. {item.unit_price} each</span>
+                  <span className="rounded bg-orange/10 px-1 text-xs text-orange">-{item.discount_percent}%</span>
+                </span>
+                <span className="text-xs text-navy-light line-through">Rs. {item.list_price}</span>
+              </span>
+            ) : (
+              <span className="text-sm text-navy/70">Rs. {item.unit_price} each</span>
+            )}
             <input
               type="number"
               min={1}
@@ -62,7 +72,12 @@ export default function CartPage() {
       {updateMutation.isError && <p className="text-sm text-red-600">{extractErrorMessage(updateMutation.error)}</p>}
 
       <div className="flex items-center justify-between">
-        <span className="text-lg font-semibold text-navy">Total: Rs. {cart.total}</span>
+        <div>
+          <span className="text-lg font-semibold text-navy">Total: Rs. {cart.total}</span>
+          {Number(cart.total_savings) > 0 && (
+            <p className="text-sm text-orange">You saved Rs. {cart.total_savings}</p>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => navigate("/checkout")}
