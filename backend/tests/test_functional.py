@@ -178,6 +178,14 @@ class TestCatalogFunctional(BaseAPITest):
         self.assertIn("Mine Inactive", names)
         self.assertNotIn("Someone Else's", names)
 
+        # is_active must actually be present in the list payload - the
+        # dashboard's Deactivate/Activate button and its toggle target both
+        # read this field, and silently missing it makes every click
+        # re-activate instead of toggling.
+        by_name = {p["name"]: p for p in r.data["results"]}
+        self.assertTrue(by_name["Mine Active"]["is_active"])
+        self.assertFalse(by_name["Mine Inactive"]["is_active"])
+
     def test_mine_filter_requires_seller_profile(self):
         self.authenticate()  # buyer, no seller profile
         r = self.client.get("/api/products/?mine=true")

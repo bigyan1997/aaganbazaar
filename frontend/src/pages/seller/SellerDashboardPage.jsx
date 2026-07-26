@@ -50,7 +50,12 @@ export default function SellerDashboardPage() {
 
   const toggleActiveMutation = useMutation({
     mutationFn: ({ slug, is_active }) => updateProduct(slug, { is_active }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["my-products"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-products"] });
+      // Deactivating must clear a product out of any cached homepage/product
+      // list results immediately, not just after the 5-minute staleTime.
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
   });
 
   const bulkDiscountMutation = useMutation({

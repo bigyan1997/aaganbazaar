@@ -44,6 +44,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             "primary_image",
             "average_rating",
             "review_count",
+            "is_active",
         )
 
     def get_primary_image(self, obj):
