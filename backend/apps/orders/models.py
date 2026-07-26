@@ -49,6 +49,7 @@ class Order(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [models.Index(fields=["buyer", "-created_at"], name="order_buyer_history_idx")]
 
     def __str__(self):
         return self.order_number
@@ -84,6 +85,7 @@ class SellerOrder(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [models.Index(fields=["seller", "status", "-created_at"], name="sellerorder_dash_idx")]
 
     def __str__(self):
         return f"{self.order.order_number} / {self.seller.store_name}"

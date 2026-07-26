@@ -1,5 +1,7 @@
 from django.db.models import Avg, Count
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from rest_framework import filters, generics, permissions, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -41,7 +43,11 @@ def _with_rating_annotations(queryset):
     ).order_by("-created_at")
 
 
+@method_decorator(cache_page(60), name="dispatch")
 class CategoryListView(generics.ListAPIView):
+    # Hit on nearly every page (navbar, homepage, filters) and changes
+    # rarely - a 60s server-side cache cuts a DB round trip off almost
+    # every request without risking noticeably stale category data.
     queryset = Category.objects.filter(is_active=True)
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]

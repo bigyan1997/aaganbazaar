@@ -54,6 +54,13 @@ class Product(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            # Covers the hot path - default browsing (is_active=True,
+            # stock_quantity__gt=0) sorted newest-first - without this,
+            # every homepage/category load does a full table scan + sort
+            # once the catalog grows past a trivial size.
+            models.Index(fields=["is_active", "stock_quantity", "-created_at"], name="product_browse_idx"),
+        ]
 
     def __str__(self):
         return self.name
