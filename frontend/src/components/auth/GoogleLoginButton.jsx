@@ -24,6 +24,29 @@ function loadGoogleScript() {
   });
 }
 
+// google.accounts.id.initialize() is a page-global call, not a per-button
+// one - calling it again on every mount (navigating between Login/Register,
+// or React StrictMode's dev double-mount) triggers Google's own "called
+// multiple times" warning. Memoized so it only ever runs once per page
+// load; the actual credential handler is routed through a module-level
+// indirection so it still always reaches whichever instance is mounted
+// right now. renderButton() still runs per-mount since its DOM target
+// changes.
+let initPromise = null;
+let activeCredentialHandler = null;
+
+function ensureGoogleInitialized() {
+  if (!initPromise) {
+    initPromise = loadGoogleScript().then(() => {
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: (response) => activeCredentialHandler?.(response),
+      });
+    });
+  }
+  return initPromise;
+}
+
 // Renders Google's own "Sign in with Google" button (Google Identity
 // Services) into a div we own. Loaded lazily here rather than in
 // index.html - only pages that actually show this button pay for it.
@@ -47,13 +70,11 @@ export default function GoogleLoginButton({ onSuccess }) {
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return undefined;
     let cancelled = false;
+    const thisHandler = (response) => mutateRef.current({ credential: response.credential });
+    activeCredentialHandler = thisHandler;
 
-    loadGoogleScript().then(() => {
+    ensureGoogleInitialized().then(() => {
       if (cancelled || !buttonRef.current) return;
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: (response) => mutateRef.current({ credential: response.credential }),
-      });
       window.google.accounts.id.renderButton(buttonRef.current, {
         theme: "outline",
         size: "large",
@@ -63,6 +84,7 @@ export default function GoogleLoginButton({ onSuccess }) {
 
     return () => {
       cancelled = true;
+      if (activeCredentialHandler === thisHandler) activeCredentialHandler = null;
     };
   }, []);
 
