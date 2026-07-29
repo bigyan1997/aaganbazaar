@@ -1,4 +1,4 @@
-from django.db.models import Avg, Count, Max
+from django.db.models import Avg, Count, Max, Q
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -49,7 +49,13 @@ class CategoryListView(generics.ListAPIView):
     # Hit on nearly every page (navbar, homepage, filters) and changes
     # rarely - a 60s server-side cache cuts a DB round trip off almost
     # every request without risking noticeably stale category data.
-    queryset = Category.objects.filter(is_active=True)
+    queryset = Category.objects.filter(is_active=True).annotate(
+        product_count=Count(
+            "products",
+            filter=Q(products__is_active=True, products__stock_quantity__gt=0),
+            distinct=True,
+        )
+    )
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = None  # small, fixed reference list - no page wrapper needed
@@ -92,7 +98,7 @@ class ProductListCreateView(generics.ListCreateAPIView):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ProductFilter
     search_fields = ["name", "description"]
-    ordering_fields = ["price", "created_at", "discount_percent"]
+    ordering_fields = ["price", "created_at", "discount_percent", "average_rating"]
 
     def get_queryset(self):
         base = _with_rating_annotations(

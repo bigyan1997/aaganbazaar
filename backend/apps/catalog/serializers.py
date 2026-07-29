@@ -4,9 +4,14 @@ from .models import Category, Product, ProductImage
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    # Populated via queryset annotation on CategoryListView; None on views
+    # that don't annotate it (e.g. the detail view), same pattern as
+    # SellerPublicSerializer.average_rating.
+    product_count = serializers.IntegerField(read_only=True, default=None)
+
     class Meta:
         model = Category
-        fields = ("id", "name", "slug", "description", "image", "parent", "display_order")
+        fields = ("id", "name", "slug", "description", "image", "parent", "display_order", "product_count")
 
 
 class CategoryDealSerializer(serializers.ModelSerializer):
@@ -54,6 +59,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             "average_rating",
             "review_count",
             "is_active",
+            "created_at",
         )
 
     def get_primary_image(self, obj):

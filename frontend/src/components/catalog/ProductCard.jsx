@@ -5,10 +5,15 @@ import useCompareStore, { MAX_COMPARE } from "../../store/compareStore";
 import StarRating from "./StarRating";
 import WishlistButton from "./WishlistButton";
 
+const NEW_WINDOW_DAYS = 14;
+
 export default function ProductCard({ product }) {
   const compared = useCompareStore((s) => s.isCompared(product.slug));
   const compareCount = useCompareStore((s) => s.slugs.length);
   const toggleCompare = useCompareStore((s) => s.toggle);
+  const isNew =
+    product.created_at &&
+    Date.now() - new Date(product.created_at).getTime() < NEW_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 
   const handleCompareClick = (e) => {
     e.preventDefault();
@@ -45,10 +50,16 @@ export default function ProductCard({ product }) {
         >
           <Scale size={14} />
         </button>
-        {product.discount_percent && (
+        {product.discount_percent ? (
           <span className="absolute left-1.5 top-1.5 rounded bg-orange px-1.5 py-0.5 text-[10px] font-medium text-white">
             -{product.discount_percent}%
           </span>
+        ) : (
+          isNew && (
+            <span className="absolute left-1.5 top-1.5 rounded bg-navy px-1.5 py-0.5 text-[10px] font-medium text-white">
+              New
+            </span>
+          )
         )}
       </div>
       <div className="p-2.5">
