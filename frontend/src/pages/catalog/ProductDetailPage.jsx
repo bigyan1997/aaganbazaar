@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Banknote, ChevronRight, MapPin, RotateCcw } from "lucide-react";
+import { Banknote, Check, ChevronRight, Link2, MapPin, RotateCcw, Scale } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
@@ -13,15 +13,39 @@ import StockAlertButton from "../../components/catalog/StockAlertButton";
 import WishlistButton from "../../components/catalog/WishlistButton";
 import ReviewForm from "../../components/orders/ReviewForm";
 import useAuthStore from "../../store/authStore";
+import useCompareStore, { MAX_COMPARE } from "../../store/compareStore";
 import { extractErrorMessage } from "../../utils/errors";
 import { timeAgo } from "../../utils/time";
+
+const TABS = ["Description", "Reviews"];
 
 export default function ProductDetailPage() {
   const { slug } = useParams();
   const [quantity, setQuantity] = useState(1);
+  const [activeTab, setActiveTab] = useState(TABS[0]);
+  const [linkCopied, setLinkCopied] = useState(false);
   const status = useAuthStore((s) => s.status);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const compared = useCompareStore((s) => (slug ? s.isCompared(slug) : false));
+  const compareCount = useCompareStore((s) => s.slugs.length);
+  const toggleCompare = useCompareStore((s) => s.toggle);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: document.title, url });
+      } catch {
+        // user cancelled the share sheet - not an error
+      }
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", slug],
@@ -82,7 +106,29 @@ export default function ProductDetailPage() {
         <div className="flex flex-col gap-4 rounded-2xl border border-cream-dark bg-white/60 p-5">
           <div className="flex items-start justify-between gap-2">
             <h1 className="text-2xl font-semibold text-navy">{product.name}</h1>
-            <WishlistButton productId={product.id} size={20} />
+            <div className="flex shrink-0 items-center gap-1">
+              <WishlistButton productId={product.id} size={20} variant="inline" />
+              <button
+                type="button"
+                onClick={() => toggleCompare(slug)}
+                disabled={!compared && compareCount >= MAX_COMPARE}
+                title={!compared && compareCount >= MAX_COMPARE ? `You can compare up to ${MAX_COMPARE} items` : undefined}
+                aria-label={compared ? "Remove from compare" : "Add to compare"}
+                className={`rounded-full p-2 disabled:cursor-not-allowed disabled:opacity-40 ${
+                  compared ? "bg-orange text-white" : "text-navy/50 hover:bg-cream"
+                }`}
+              >
+                <Scale size={20} />
+              </button>
+              <button
+                type="button"
+                onClick={handleShare}
+                aria-label="Share this product"
+                className="rounded-full p-2 text-navy/50 hover:bg-cream"
+              >
+                {linkCopied ? <Check size={20} className="text-green-600" /> : <Link2 size={20} />}
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-sm text-navy/60">
@@ -157,18 +203,27 @@ export default function ProductDetailPage() {
       </div>
 
       <section className="rounded-2xl border border-cream-dark bg-white/60 p-5">
-        <h2 className="mb-2 text-lg font-semibold text-navy">Product Details</h2>
-        <p className="whitespace-pre-line text-navy/80">{product.description}</p>
-      </section>
-
-      <section>
-        <div className="mb-3 flex flex-wrap items-center gap-3">
-          <h2 className="text-lg font-semibold text-navy">Reviews</h2>
-          {product.review_count > 0 && (
-            <StarRating rating={product.average_rating} count={product.review_count} size={14} />
-          )}
+        <div className="mb-4 flex gap-1 border-b border-cream-dark">
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`min-h-11 border-b-2 px-3 text-sm font-medium ${
+                activeTab === tab ? "border-orange text-orange" : "border-transparent text-navy/60 hover:text-navy"
+              }`}
+            >
+              {tab === "Reviews" && product.review_count > 0 ? `Reviews (${product.review_count})` : tab}
+            </button>
+          ))}
         </div>
 
+        {activeTab === "Description" && (
+          <p className="whitespace-pre-line text-navy/80">{product.description}</p>
+        )}
+
+        {activeTab === "Reviews" && (
+        <div>
         {reviewable?.order_item_id && (
           <div className="mb-4">
             <p className="mb-1 text-sm font-medium text-navy">You bought this - leave a review</p>
@@ -211,6 +266,8 @@ export default function ProductDetailPage() {
           </ul>
         ) : (
           <p className="text-sm text-navy/60">No reviews yet.</p>
+        )}
+        </div>
         )}
       </section>
 
