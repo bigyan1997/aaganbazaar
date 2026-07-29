@@ -1,10 +1,21 @@
-import { ShoppingBag } from "lucide-react";
+import { Scale, ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import useCompareStore, { MAX_COMPARE } from "../../store/compareStore";
 import StarRating from "./StarRating";
 import WishlistButton from "./WishlistButton";
 
 export default function ProductCard({ product }) {
+  const compared = useCompareStore((s) => s.isCompared(product.slug));
+  const compareCount = useCompareStore((s) => s.slugs.length);
+  const toggleCompare = useCompareStore((s) => s.toggle);
+
+  const handleCompareClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleCompare(product.slug);
+  };
+
   return (
     <Link
       to={`/products/${product.slug}`}
@@ -22,6 +33,18 @@ export default function ProductCard({ product }) {
           <ShoppingBag size={22} className="text-navy" strokeWidth={1.75} />
         )}
         <WishlistButton productId={product.id} size={14} className="absolute right-1.5 top-1.5" />
+        <button
+          type="button"
+          onClick={handleCompareClick}
+          disabled={!compared && compareCount >= MAX_COMPARE}
+          aria-label={compared ? "Remove from compare" : "Add to compare"}
+          title={!compared && compareCount >= MAX_COMPARE ? `You can compare up to ${MAX_COMPARE} items` : undefined}
+          className={`absolute bottom-1.5 right-1.5 rounded-full p-1.5 shadow-sm after:absolute after:-inset-2.5 after:content-[''] disabled:cursor-not-allowed disabled:opacity-40 ${
+            compared ? "bg-orange text-white" : "bg-white/80 text-navy/50 hover:bg-white"
+          }`}
+        >
+          <Scale size={14} />
+        </button>
         {product.discount_percent && (
           <span className="absolute left-1.5 top-1.5 rounded bg-orange px-1.5 py-0.5 text-[10px] font-medium text-white">
             -{product.discount_percent}%

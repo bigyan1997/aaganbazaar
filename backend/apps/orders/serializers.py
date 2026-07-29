@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 
 from .models import Order, OrderItem, SellerOrder
@@ -20,6 +22,8 @@ class SellerOrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     seller_name = serializers.CharField(source="seller.store_name", read_only=True)
     order_number = serializers.CharField(source="order.order_number", read_only=True)
+    commission_amount = serializers.SerializerMethodField()
+    net_earnings = serializers.SerializerMethodField()
 
     class Meta:
         model = SellerOrder
@@ -30,11 +34,31 @@ class SellerOrderSerializer(serializers.ModelSerializer):
             "seller_name",
             "status",
             "subtotal",
+            "commission_rate",
+            "commission_amount",
+            "net_earnings",
             "tracking_number",
             "items",
             "created_at",
         )
-        read_only_fields = ("id", "order_number", "seller", "seller_name", "subtotal", "items", "created_at")
+        read_only_fields = (
+            "id",
+            "order_number",
+            "seller",
+            "seller_name",
+            "subtotal",
+            "commission_rate",
+            "commission_amount",
+            "net_earnings",
+            "items",
+            "created_at",
+        )
+
+    def get_commission_amount(self, obj):
+        return (obj.subtotal * obj.commission_rate / Decimal("100")).quantize(Decimal("0.01"))
+
+    def get_net_earnings(self, obj):
+        return obj.subtotal - self.get_commission_amount(obj)
 
 
 class SellerOrderUpdateSerializer(serializers.ModelSerializer):

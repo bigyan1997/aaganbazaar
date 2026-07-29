@@ -20,6 +20,30 @@ const NEXT_STATUSES = {
 // Nothing further can happen to these - no edit affordance at all.
 const TERMINAL_STATUSES = ["cancelled", "refunded"];
 
+function EarningsSummary({ orders }) {
+  const delivered = orders.filter((o) => o.status === "delivered");
+  const inProgress = orders.filter((o) => !["delivered", "cancelled", "refunded"].includes(o.status));
+  const totalEarned = delivered.reduce((sum, o) => sum + Number(o.net_earnings), 0);
+  const pendingEarnings = inProgress.reduce((sum, o) => sum + Number(o.net_earnings), 0);
+
+  return (
+    <div className="grid grid-cols-2 gap-4 rounded-xl border border-cream-dark bg-white/60 p-4">
+      <div>
+        <p className="text-xs text-text-muted">Total earned</p>
+        <p className="text-xl font-semibold text-orange">Rs. {totalEarned.toFixed(2)}</p>
+        <p className="text-[11px] text-navy/50">
+          {delivered.length} delivered order{delivered.length === 1 ? "" : "s"}
+        </p>
+      </div>
+      <div>
+        <p className="text-xs text-text-muted">Pending earnings</p>
+        <p className="text-xl font-semibold text-navy">Rs. {pendingEarnings.toFixed(2)}</p>
+        <p className="text-[11px] text-navy/50">{inProgress.length} in progress</p>
+      </div>
+    </div>
+  );
+}
+
 function SellerOrderRow({ sellerOrder }) {
   const [status, setStatus] = useState(sellerOrder.status);
   const [tracking, setTracking] = useState(sellerOrder.tracking_number || "");
@@ -43,9 +67,15 @@ function SellerOrderRow({ sellerOrder }) {
 
   return (
     <li className="rounded border border-navy/10 p-4">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <span className="font-medium text-navy">{sellerOrder.order_number}</span>
-        <span className="text-sm text-navy/60">Subtotal: Rs. {sellerOrder.subtotal}</span>
+        <div className="text-right">
+          <p className="text-sm text-navy/60">Subtotal: Rs. {sellerOrder.subtotal}</p>
+          <p className="text-xs text-navy/40">
+            Commission ({sellerOrder.commission_rate}%): -Rs. {sellerOrder.commission_amount} · Net:{" "}
+            <span className="font-medium text-orange">Rs. {sellerOrder.net_earnings}</span>
+          </p>
+        </div>
       </div>
       <div className="mb-3">
         <OrderTimeline status={sellerOrder.status} />
@@ -127,6 +157,7 @@ export default function SellerOrdersPage() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold text-navy">Seller Orders</h1>
+      <EarningsSummary orders={orders} />
       <ul className="flex flex-col gap-4">
         {orders.map((so) => (
           <SellerOrderRow key={so.id} sellerOrder={so} />

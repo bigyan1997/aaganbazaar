@@ -667,6 +667,17 @@ class TestOrderFunctional(BaseAPITest):
         self.assertEqual(r.data["count"], 1)
         self.assertEqual(r.data["results"][0]["status"], "pending")
 
+    def test_seller_order_includes_earnings_breakdown(self):
+        seller = self.create_seller(commission_rate=Decimal("10.00"))
+        product = self.create_product(seller=seller, price=Decimal("200.00"))
+        self.create_order(product=product, quantity=2, status="delivered")
+        self.authenticate(seller.user)
+        r = self.client.get("/api/orders/seller/")
+        entry = r.data["results"][0]
+        self.assertEqual(entry["subtotal"], "400.00")
+        self.assertEqual(entry["commission_amount"], Decimal("40.00"))
+        self.assertEqual(entry["net_earnings"], Decimal("360.00"))
+
     @patch("apps.orders.views.send_refund_email")
     def test_seller_can_refund_a_delivered_order(self, mock_send):
         seller = self.create_seller()

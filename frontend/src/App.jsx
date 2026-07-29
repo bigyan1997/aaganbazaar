@@ -22,10 +22,12 @@ const ProductDetailPage = lazy(() => import("./pages/catalog/ProductDetailPage")
 const ProductsPage = lazy(() => import("./pages/catalog/ProductsPage"));
 const DealsHubPage = lazy(() => import("./pages/DealsHubPage"));
 const CategoryDealsPage = lazy(() => import("./pages/CategoryDealsPage"));
+const ComparePage = lazy(() => import("./pages/ComparePage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const AccountPage = lazy(() => import("./pages/AccountPage"));
 const CheckoutPage = lazy(() => import("./pages/orders/CheckoutPage"));
 const OrderDetailPage = lazy(() => import("./pages/orders/OrderDetailPage"));
+const OrderInvoicePage = lazy(() => import("./pages/orders/OrderInvoicePage"));
 const OrdersPage = lazy(() => import("./pages/orders/OrdersPage"));
 const SellerApplyPage = lazy(() => import("./pages/seller/SellerApplyPage"));
 const SellerDashboardPage = lazy(() => import("./pages/seller/SellerDashboardPage"));
@@ -33,6 +35,10 @@ const SellerOrdersPage = lazy(() => import("./pages/seller/SellerOrdersPage"));
 const SellerPublicPage = lazy(() => import("./pages/seller/SellerPublicPage"));
 const StoresPage = lazy(() => import("./pages/StoresPage"));
 const WishlistPage = lazy(() => import("./pages/WishlistPage"));
+const AboutPage = lazy(() => import("./pages/info/AboutPage"));
+const ContactPage = lazy(() => import("./pages/info/ContactPage"));
+const TermsPage = lazy(() => import("./pages/info/TermsPage"));
+const PrivacyPage = lazy(() => import("./pages/info/PrivacyPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,6 +62,11 @@ function AppRoutes() {
         <Route path="/deals/:categorySlug" element={<CategoryDealsPage />} />
         <Route path="/sellers/:slug" element={<SellerPublicPage />} />
         <Route path="/stores" element={<StoresPage />} />
+        <Route path="/compare" element={<ComparePage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
 
         <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
         <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
@@ -63,6 +74,7 @@ function AppRoutes() {
         <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
         <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
         <Route path="/orders/:orderNumber" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
+        <Route path="/orders/:orderNumber/invoice" element={<ProtectedRoute><OrderInvoicePage /></ProtectedRoute>} />
         <Route path="/sell" element={<SellerApplyPage />} />
         <Route path="/seller/dashboard" element={<SellerRoute><SellerDashboardPage /></SellerRoute>} />
         <Route path="/seller/orders" element={<SellerRoute><SellerOrdersPage /></SellerRoute>} />

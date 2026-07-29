@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import { getOrder } from "../../api/orders";
 import OrderTimeline from "../../components/orders/OrderTimeline";
@@ -17,9 +17,17 @@ export default function OrderDetailPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold text-navy">Order {order.order_number}</h1>
-        <p className="text-sm text-navy/60">{new Date(order.created_at).toLocaleString()}</p>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-semibold text-navy">Order {order.order_number}</h1>
+          <p className="text-sm text-navy/60">{new Date(order.created_at).toLocaleString()}</p>
+        </div>
+        <Link
+          to={`/orders/${orderNumber}/invoice`}
+          className="flex min-h-11 shrink-0 items-center rounded-lg border border-navy/20 px-3 text-sm text-navy hover:bg-cream"
+        >
+          View invoice
+        </Link>
       </div>
 
       <div className="grid gap-4 rounded border border-navy/10 p-4 text-sm sm:grid-cols-2">
