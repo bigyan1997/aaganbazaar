@@ -117,17 +117,18 @@ export default function ProductDetailPage() {
             <div className="flex items-center gap-3">
               <input
                 type="number"
+                inputMode="numeric"
                 min={1}
                 max={product.stock_quantity}
                 value={quantity}
                 onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
-                className="w-20 rounded border border-navy/20 px-2 py-1.5 text-sm"
+                className="min-h-11 w-20 rounded border border-navy/20 px-2 py-1.5 text-sm"
               />
               <button
                 type="button"
                 onClick={handleAddToCart}
                 disabled={addToCart.isPending}
-                className="flex-1 rounded-lg bg-orange px-4 py-2.5 font-medium text-cream hover:opacity-90 disabled:opacity-50"
+                className="min-h-11 flex-1 rounded-lg bg-orange px-4 py-2.5 font-medium text-cream hover:opacity-90 disabled:opacity-50"
               >
                 {addToCart.isPending ? "Adding…" : "Add to Cart"}
               </button>

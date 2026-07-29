@@ -11,7 +11,7 @@ import useAuthStore from "../../store/authStore";
 import { extractErrorMessage } from "../../utils/errors";
 
 const inputClass =
-  "w-full rounded-lg border border-navy/15 px-3 py-2.5 text-sm focus:border-orange focus:outline-none focus:ring-1 focus:ring-orange";
+  "min-h-11 w-full rounded-lg border border-navy/15 px-3 py-2.5 text-sm focus:border-orange focus:outline-none focus:ring-1 focus:ring-orange";
 const iconInputClass = `${inputClass} pl-10 pr-3`;
 const passwordInputClass = `${inputClass} pl-10 pr-10`;
 
@@ -90,7 +90,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={mutation.isPending}
-            className="mt-1 rounded-lg bg-orange py-2.5 font-medium text-cream hover:opacity-90 disabled:opacity-50"
+            className="mt-1 min-h-11 rounded-lg bg-orange py-2.5 font-medium text-cream hover:opacity-90 disabled:opacity-50"
           >
             {mutation.isPending ? "Creating account…" : "Create account"}
           </button>

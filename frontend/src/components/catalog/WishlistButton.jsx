@@ -39,7 +39,7 @@ export default function WishlistButton({ productId, size = 18, className = "" })
       onClick={handleClick}
       disabled={add.isPending || remove.isPending}
       aria-label={item ? "Remove from wishlist" : "Save to wishlist"}
-      className={`rounded-full bg-white/80 p-1.5 shadow-sm hover:bg-white ${className}`}
+      className={`relative rounded-full bg-white/80 p-1.5 shadow-sm after:absolute after:-inset-2.5 after:content-[''] hover:bg-white ${className}`}
     >
       <Heart size={size} className={item ? "fill-orange text-orange" : "text-navy/50"} />
     </button>

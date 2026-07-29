@@ -26,7 +26,7 @@ export default function StockAlertButton({ slug }) {
         type="button"
         onClick={() => unsubscribe.mutate()}
         disabled={unsubscribe.isPending}
-        className="flex items-center gap-1.5 text-sm text-navy/70 hover:text-navy"
+        className="flex min-h-11 items-center gap-1.5 text-sm text-navy/70 hover:text-navy"
       >
         <BellOff size={16} /> We'll email you when it's back
       </button>
@@ -38,7 +38,7 @@ export default function StockAlertButton({ slug }) {
       type="button"
       onClick={() => subscribe.mutate()}
       disabled={subscribe.isPending}
-      className="flex items-center gap-1.5 rounded border border-navy/20 px-3 py-1.5 text-sm text-navy hover:bg-cream"
+      className="flex min-h-11 items-center gap-1.5 rounded border border-navy/20 px-3 py-1.5 text-sm text-navy hover:bg-cream"
     >
       <Bell size={16} /> Notify me when back in stock
     </button>

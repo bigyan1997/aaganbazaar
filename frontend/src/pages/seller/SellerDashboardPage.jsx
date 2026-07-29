@@ -7,7 +7,8 @@ import ProductEditForm from "../../components/seller/ProductEditForm";
 import ProductImageManager from "../../components/seller/ProductImageManager";
 import { extractErrorMessage } from "../../utils/errors";
 
-const inputClass = "w-full rounded border border-navy/20 px-3 py-2 text-sm focus:border-orange focus:outline-none";
+const inputClass =
+  "min-h-11 w-full rounded border border-navy/20 px-3 py-2 text-sm focus:border-orange focus:outline-none";
 
 const emptyForm = { category: "", name: "", description: "", price: "", stock_quantity: "" };
 
@@ -92,9 +93,12 @@ export default function SellerDashboardPage() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search your products"
-            className="flex-1 rounded border border-navy/20 px-3 py-1.5 text-sm"
+            className="min-h-11 flex-1 rounded border border-navy/20 px-3 py-1.5 text-sm"
           />
-          <button type="submit" className="rounded border border-navy/20 px-3 py-1.5 text-sm hover:bg-cream">
+          <button
+            type="submit"
+            className="min-h-11 rounded border border-navy/20 px-3 py-1.5 text-sm hover:bg-cream"
+          >
             Search
           </button>
         </form>
@@ -104,18 +108,19 @@ export default function SellerDashboardPage() {
             <span className="text-navy">{selected.size} selected</span>
             <input
               type="number"
+              inputMode="numeric"
               min="1"
               max="99"
               value={discountInput}
               onChange={(e) => setDiscountInput(e.target.value)}
-              className="w-16 rounded border border-navy/20 px-2 py-1 text-sm"
+              className="min-h-11 w-16 rounded border border-navy/20 px-2 py-1 text-sm"
             />
             <span className="text-navy/60">% off</span>
             <button
               type="button"
               onClick={() => bulkDiscountMutation.mutate(Number(discountInput))}
               disabled={bulkDiscountMutation.isPending}
-              className="rounded bg-orange px-3 py-1 text-xs font-medium text-cream hover:opacity-90 disabled:opacity-50"
+              className="min-h-11 rounded bg-orange px-3 py-1 text-xs font-medium text-cream hover:opacity-90 disabled:opacity-50"
             >
               Apply
             </button>
@@ -123,7 +128,7 @@ export default function SellerDashboardPage() {
               type="button"
               onClick={() => bulkDiscountMutation.mutate(null)}
               disabled={bulkDiscountMutation.isPending}
-              className="rounded border border-navy/20 px-3 py-1 text-xs text-navy hover:bg-cream"
+              className="min-h-11 rounded border border-navy/20 px-3 py-1 text-xs text-navy hover:bg-cream"
             >
               Remove discount
             </button>
@@ -139,22 +144,22 @@ export default function SellerDashboardPage() {
           <ul className="flex flex-col divide-y divide-navy/10 rounded border border-navy/10">
             {products.results.map((product) => (
               <li key={product.id} className="p-3 text-sm">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       checked={selected.has(product.id)}
                       onChange={() => toggleSelected(product.id)}
-                      className="h-4 w-4"
+                      className="h-4 w-4 shrink-0"
                     />
                     {product.primary_image ? (
                       <img
                         src={product.primary_image}
                         alt=""
-                        className="h-10 w-10 rounded border border-navy/10 object-cover"
+                        className="h-10 w-10 shrink-0 rounded border border-navy/10 object-cover"
                       />
                     ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded border border-navy/10 bg-cream text-navy/40">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded border border-navy/10 bg-cream text-navy/40">
                         <ImageIcon size={16} />
                       </div>
                     )}
@@ -176,18 +181,18 @@ export default function SellerDashboardPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                     <button
                       type="button"
                       onClick={() => setEditingSlug(editingSlug === product.slug ? null : product.slug)}
-                      className="rounded border border-navy/20 px-2 py-1 text-xs"
+                      className="min-h-11 rounded border border-navy/20 px-2.5 py-1 text-xs"
                     >
                       {editingSlug === product.slug ? "Close edit" : "Edit"}
                     </button>
                     <button
                       type="button"
                       onClick={() => setExpandedSlug(expandedSlug === product.slug ? null : product.slug)}
-                      className="rounded border border-navy/20 px-2 py-1 text-xs"
+                      className="min-h-11 rounded border border-navy/20 px-2.5 py-1 text-xs"
                     >
                       {expandedSlug === product.slug ? "Hide images" : "Manage images"}
                     </button>
@@ -196,7 +201,7 @@ export default function SellerDashboardPage() {
                       onClick={() =>
                         toggleActiveMutation.mutate({ slug: product.slug, is_active: !product.is_active })
                       }
-                      className="rounded border border-navy/20 px-2 py-1 text-xs"
+                      className="min-h-11 rounded border border-navy/20 px-2.5 py-1 text-xs"
                     >
                       {product.is_active ? "Deactivate" : "Activate"}
                     </button>
@@ -221,7 +226,7 @@ export default function SellerDashboardPage() {
               type="button"
               disabled={!products?.previous}
               onClick={() => goToPage(page - 1)}
-              className="rounded border border-navy/20 px-3 py-1.5 text-sm disabled:opacity-40"
+              className="min-h-11 rounded border border-navy/20 px-3 py-1.5 text-sm disabled:opacity-40"
             >
               Previous
             </button>
@@ -230,7 +235,7 @@ export default function SellerDashboardPage() {
               type="button"
               disabled={!products?.next}
               onClick={() => goToPage(page + 1)}
-              className="rounded border border-navy/20 px-3 py-1.5 text-sm disabled:opacity-40"
+              className="min-h-11 rounded border border-navy/20 px-3 py-1.5 text-sm disabled:opacity-40"
             >
               Next
             </button>
@@ -265,11 +270,28 @@ export default function SellerDashboardPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1 block text-sm text-navy">Price (Rs.)</label>
-              <input required type="number" min="0" step="0.01" value={form.price} onChange={update("price")} className={inputClass} />
+              <input
+                required
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.01"
+                value={form.price}
+                onChange={update("price")}
+                className={inputClass}
+              />
             </div>
             <div>
               <label className="mb-1 block text-sm text-navy">Stock</label>
-              <input required type="number" min="0" value={form.stock_quantity} onChange={update("stock_quantity")} className={inputClass} />
+              <input
+                required
+                type="number"
+                inputMode="numeric"
+                min="0"
+                value={form.stock_quantity}
+                onChange={update("stock_quantity")}
+                className={inputClass}
+              />
             </div>
           </div>
 
@@ -280,7 +302,7 @@ export default function SellerDashboardPage() {
           <button
             type="submit"
             disabled={createMutation.isPending}
-            className="rounded bg-orange px-4 py-2 font-medium text-cream hover:opacity-90 disabled:opacity-50"
+            className="min-h-11 rounded bg-orange px-4 py-2 font-medium text-cream hover:opacity-90 disabled:opacity-50"
           >
             {createMutation.isPending ? "Creating…" : "Create product"}
           </button>

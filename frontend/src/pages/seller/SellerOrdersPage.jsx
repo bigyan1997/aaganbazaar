@@ -65,7 +65,7 @@ function SellerOrderRow({ sellerOrder }) {
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="rounded border border-navy/20 px-3 py-1.5 text-sm text-navy hover:bg-cream"
+          className="min-h-11 rounded border border-navy/20 px-3 py-1.5 text-sm text-navy hover:bg-cream"
         >
           Edit order
         </button>
@@ -76,7 +76,7 @@ function SellerOrderRow({ sellerOrder }) {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="rounded border border-navy/20 px-2 py-1 text-sm"
+            className="min-h-11 rounded border border-navy/20 px-2 py-1 text-sm"
           >
             {(NEXT_STATUSES[sellerOrder.status] || [sellerOrder.status]).map((s) => (
               <option key={s} value={s}>
@@ -88,13 +88,13 @@ function SellerOrderRow({ sellerOrder }) {
             value={tracking}
             onChange={(e) => setTracking(e.target.value)}
             placeholder="Tracking number"
-            className="rounded border border-navy/20 px-2 py-1 text-sm"
+            className="min-h-11 rounded border border-navy/20 px-2 py-1 text-sm"
           />
           <button
             type="button"
             onClick={() => mutation.mutate()}
             disabled={mutation.isPending}
-            className="rounded bg-orange px-3 py-1.5 text-sm font-medium text-cream hover:opacity-90 disabled:opacity-50"
+            className="min-h-11 rounded bg-orange px-3 py-1.5 text-sm font-medium text-cream hover:opacity-90 disabled:opacity-50"
           >
             {mutation.isPending ? "Saving…" : "Update"}
           </button>
@@ -105,7 +105,7 @@ function SellerOrderRow({ sellerOrder }) {
                 setStatus(sellerOrder.status);
                 setEditing(false);
               }}
-              className="text-sm text-navy/60 hover:underline"
+              className="flex min-h-11 items-center text-sm text-navy/60 hover:underline"
             >
               Cancel
             </button>

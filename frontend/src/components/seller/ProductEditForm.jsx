@@ -4,7 +4,8 @@ import { useState } from "react";
 import { getCategories, updateProduct } from "../../api/catalog";
 import { extractErrorMessage } from "../../utils/errors";
 
-const inputClass = "w-full rounded border border-navy/20 px-3 py-2 text-sm focus:border-orange focus:outline-none";
+const inputClass =
+  "min-h-11 w-full rounded border border-navy/20 px-3 py-2 text-sm focus:border-orange focus:outline-none";
 
 export default function ProductEditForm({ product, onDone }) {
   const [form, setForm] = useState({
@@ -60,6 +61,7 @@ export default function ProductEditForm({ product, onDone }) {
           <input
             required
             type="number"
+            inputMode="decimal"
             min="0"
             step="0.01"
             value={form.price}
@@ -72,6 +74,7 @@ export default function ProductEditForm({ product, onDone }) {
           <input
             required
             type="number"
+            inputMode="numeric"
             min="0"
             value={form.stock_quantity}
             onChange={update("stock_quantity")}
@@ -86,14 +89,14 @@ export default function ProductEditForm({ product, onDone }) {
         <button
           type="submit"
           disabled={mutation.isPending}
-          className="rounded bg-orange px-3 py-1.5 text-xs font-medium text-cream hover:opacity-90 disabled:opacity-50"
+          className="min-h-11 rounded bg-orange px-3 py-1.5 text-xs font-medium text-cream hover:opacity-90 disabled:opacity-50"
         >
           {mutation.isPending ? "Saving…" : "Save changes"}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="rounded border border-navy/20 px-3 py-1.5 text-xs text-navy hover:bg-cream-dark"
+          className="min-h-11 rounded border border-navy/20 px-3 py-1.5 text-xs text-navy hover:bg-cream-dark"
         >
           Cancel
         </button>

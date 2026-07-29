@@ -21,7 +21,7 @@ export default function AccountMenu({ user, onLogout }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 rounded-full py-0.5 pl-0.5 pr-2 hover:bg-white/10"
+        className="flex min-h-11 items-center gap-1.5 rounded-full py-0.5 pl-0.5 pr-2 hover:bg-white/10"
       >
         <Avatar user={user} size={32} />
         <ChevronDown size={14} className="text-cream/70" />
@@ -36,7 +36,7 @@ export default function AccountMenu({ user, onLogout }) {
           <Link
             to="/orders"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-cream"
+            className="flex min-h-11 items-center gap-2 px-3 py-2.5 text-sm text-navy hover:bg-cream"
           >
             <Package size={15} className="text-navy-light" />
             Purchases
@@ -44,7 +44,7 @@ export default function AccountMenu({ user, onLogout }) {
           <Link
             to="/wishlist"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-cream"
+            className="flex min-h-11 items-center gap-2 px-3 py-2.5 text-sm text-navy hover:bg-cream"
           >
             <Heart size={15} className="text-navy-light" />
             Wishlist
@@ -52,7 +52,7 @@ export default function AccountMenu({ user, onLogout }) {
           <Link
             to="/account"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-cream"
+            className="flex min-h-11 items-center gap-2 px-3 py-2.5 text-sm text-navy hover:bg-cream"
           >
             <UserIcon size={15} className="text-navy-light" />
             Manage account
@@ -63,7 +63,7 @@ export default function AccountMenu({ user, onLogout }) {
               setOpen(false);
               onLogout();
             }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-navy hover:bg-cream"
+            className="flex min-h-11 w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-navy hover:bg-cream"
           >
             <LogOut size={15} className="text-navy-light" />
             Logout

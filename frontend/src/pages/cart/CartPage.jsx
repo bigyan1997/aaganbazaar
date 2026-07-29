@@ -32,39 +32,42 @@ export default function CartPage() {
 
       <ul className="flex flex-col divide-y divide-navy/10 rounded border border-navy/10">
         {cart.items.map((item) => (
-          <li key={item.id} className="flex flex-wrap items-center gap-4 p-4">
-            <Link to={`/products/${item.product_slug}`} className="flex-1 font-medium text-navy hover:text-orange">
+          <li key={item.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+            <Link to={`/products/${item.product_slug}`} className="font-medium text-navy hover:text-orange sm:flex-1">
               {item.product_name}
             </Link>
-            {item.discount_percent ? (
-              <span className="flex flex-col items-end text-sm">
-                <span className="flex items-center gap-1.5">
-                  <span className="text-navy/70">Rs. {item.unit_price} each</span>
-                  <span className="rounded bg-orange/10 px-1 text-xs text-orange">-{item.discount_percent}%</span>
+            <div className="flex flex-wrap items-center justify-between gap-3 sm:contents">
+              {item.discount_percent ? (
+                <span className="flex flex-col text-sm sm:items-end">
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-navy/70">Rs. {item.unit_price} each</span>
+                    <span className="rounded bg-orange/10 px-1 text-xs text-orange">-{item.discount_percent}%</span>
+                  </span>
+                  <span className="text-xs text-navy-light line-through">Rs. {item.list_price}</span>
                 </span>
-                <span className="text-xs text-navy-light line-through">Rs. {item.list_price}</span>
-              </span>
-            ) : (
-              <span className="text-sm text-navy/70">Rs. {item.unit_price} each</span>
-            )}
-            <input
-              type="number"
-              min={1}
-              value={item.quantity}
-              onChange={(e) => {
-                const quantity = Math.max(1, Number(e.target.value));
-                updateMutation.mutate({ id: item.id, quantity });
-              }}
-              className="w-16 rounded border border-navy/20 px-2 py-1 text-sm"
-            />
-            <span className="w-24 text-right font-semibold text-orange">Rs. {item.line_total}</span>
-            <button
-              type="button"
-              onClick={() => removeMutation.mutate(item.id)}
-              className="text-sm text-red-600 hover:underline"
-            >
-              Remove
-            </button>
+              ) : (
+                <span className="text-sm text-navy/70">Rs. {item.unit_price} each</span>
+              )}
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                value={item.quantity}
+                onChange={(e) => {
+                  const quantity = Math.max(1, Number(e.target.value));
+                  updateMutation.mutate({ id: item.id, quantity });
+                }}
+                className="min-h-11 w-16 rounded border border-navy/20 px-2 py-1 text-sm"
+              />
+              <span className="text-right font-semibold text-orange sm:w-24">Rs. {item.line_total}</span>
+              <button
+                type="button"
+                onClick={() => removeMutation.mutate(item.id)}
+                className="flex min-h-11 items-center text-sm text-red-600 hover:underline"
+              >
+                Remove
+              </button>
+            </div>
           </li>
         ))}
       </ul>
@@ -81,7 +84,7 @@ export default function CartPage() {
         <button
           type="button"
           onClick={() => navigate("/checkout")}
-          className="rounded bg-orange px-5 py-2 font-medium text-cream hover:opacity-90"
+          className="min-h-11 rounded bg-orange px-5 py-2 font-medium text-cream hover:opacity-90"
         >
           Proceed to Checkout
         </button>

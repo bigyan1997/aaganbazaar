@@ -12,7 +12,7 @@ import useAuthStore from "../../store/authStore";
 import AccountMenu from "./AccountMenu";
 
 const clusterLinkClass =
-  "flex flex-col items-center gap-0.5 rounded-lg px-2 py-1.5 text-cream hover:bg-white/10 hover:text-white";
+  "flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-1.5 text-cream hover:bg-white/10 hover:text-white";
 const clusterLabelClass = "hidden text-[10px] leading-none sm:block";
 
 export default function Navbar() {
@@ -96,7 +96,7 @@ export default function Navbar() {
               type="button"
               onClick={() => setMobileSearchOpen(false)}
               aria-label="Close search"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-navy/50 hover:bg-cream"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-navy/50 hover:bg-cream"
             >
               <X size={18} />
             </button>
@@ -113,7 +113,7 @@ export default function Navbar() {
                 onClick={() => setCategoriesOpen((o) => !o)}
                 aria-label="Browse categories"
                 aria-expanded={categoriesOpen}
-                className="flex h-10 w-10 items-center justify-center rounded-lg text-cream hover:bg-white/10 hover:text-white"
+                className="flex h-11 w-11 items-center justify-center rounded-lg text-cream hover:bg-white/10 hover:text-white"
               >
                 {categoriesOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
@@ -122,7 +122,7 @@ export default function Navbar() {
                   <Link
                     to="/deals"
                     onClick={() => setCategoriesOpen(false)}
-                    className="block px-3.5 py-2 text-sm font-medium text-orange hover:bg-cream"
+                    className="block px-3.5 py-2.5 text-sm font-medium text-orange hover:bg-cream"
                   >
                     Deals
                   </Link>
@@ -132,7 +132,7 @@ export default function Navbar() {
                       key={c.id}
                       to={`/products?category=${c.slug}`}
                       onClick={() => setCategoriesOpen(false)}
-                      className="block px-3.5 py-2 text-sm text-navy hover:bg-cream"
+                      className="block px-3.5 py-2.5 text-sm text-navy hover:bg-cream"
                     >
                       {c.name}
                     </Link>
@@ -169,7 +169,7 @@ export default function Navbar() {
             <button
               type="submit"
               aria-label="Search"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange text-white hover:bg-orange-dark"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange text-white hover:bg-orange-dark"
             >
               <Search size={16} />
             </button>
@@ -180,13 +180,13 @@ export default function Navbar() {
             type="button"
             onClick={() => setMobileSearchOpen(true)}
             aria-label="Open search"
-            className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-cream hover:bg-white/10 sm:hidden"
+            className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-cream hover:bg-white/10 sm:hidden"
           >
             <Search size={20} />
           </button>
 
           {/* Right cluster */}
-          <div className="flex shrink-0 items-center gap-0.5">
+          <div className="flex shrink-0 items-center gap-2">
             {isSeller ? (
               <>
                 <Link to="/seller/dashboard" className={clusterLinkClass}>

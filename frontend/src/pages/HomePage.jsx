@@ -164,7 +164,10 @@ export default function HomePage() {
             <p className="mb-1 text-[15px] font-medium text-white">Sell on Aaganbazaar</p>
             <p className="text-xs text-cream-dark">Lower fees than the big platforms, and your buyers are Nepali</p>
           </div>
-          <Link to="/sell" className="rounded-lg bg-white px-4.5 py-2 text-xs font-medium text-navy">
+          <Link
+            to="/sell"
+            className="flex min-h-11 items-center rounded-lg bg-white px-4.5 py-2 text-xs font-medium text-navy"
+          >
             Become a seller ↗
           </Link>
         </div>

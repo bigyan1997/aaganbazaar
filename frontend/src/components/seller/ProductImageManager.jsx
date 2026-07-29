@@ -65,7 +65,7 @@ export default function ProductImageManager({ slug }) {
                 onClick={() => deleteMutation.mutate(image.id)}
                 disabled={deleteMutation.isPending}
                 title="Delete image"
-                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white text-red-600 shadow disabled:opacity-50"
+                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white text-red-600 shadow after:absolute after:-inset-2.5 after:content-[''] disabled:opacity-50"
               >
                 <Trash2 size={12} />
               </button>

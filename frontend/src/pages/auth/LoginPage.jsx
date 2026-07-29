@@ -11,7 +11,7 @@ import useAuthStore from "../../store/authStore";
 import { extractErrorMessage } from "../../utils/errors";
 
 const inputBaseClass =
-  "w-full rounded-lg border border-navy/15 py-2.5 pl-10 text-sm focus:border-orange focus:outline-none focus:ring-1 focus:ring-orange";
+  "min-h-11 w-full rounded-lg border border-navy/15 py-2.5 pl-10 text-sm focus:border-orange focus:outline-none focus:ring-1 focus:ring-orange";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -67,7 +67,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={mutation.isPending}
-            className="mt-1 rounded-lg bg-orange py-2.5 font-medium text-cream hover:opacity-90 disabled:opacity-50"
+            className="mt-1 min-h-11 rounded-lg bg-orange py-2.5 font-medium text-cream hover:opacity-90 disabled:opacity-50"
           >
             {mutation.isPending ? "Logging in…" : "Log in"}
           </button>
@@ -80,7 +80,10 @@ export default function LoginPage() {
         </div>
         <GoogleLoginButton onSuccess={goToDestination} />
 
-        <Link to="/forgot-password" className="mt-4 block text-center text-sm text-navy/70 hover:text-orange">
+        <Link
+          to="/forgot-password"
+          className="mt-4 block py-1 text-center text-sm text-navy/70 hover:text-orange"
+        >
           Forgot password?
         </Link>
       </div>

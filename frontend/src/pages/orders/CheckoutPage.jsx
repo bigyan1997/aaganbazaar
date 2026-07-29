@@ -6,7 +6,8 @@ import { getCart } from "../../api/cart";
 import { checkout } from "../../api/orders";
 import { extractErrorMessage } from "../../utils/errors";
 
-const inputClass = "w-full rounded border border-navy/20 px-3 py-2 text-sm focus:border-orange focus:outline-none";
+const inputClass =
+  "min-h-11 w-full rounded border border-navy/20 px-3 py-2 text-sm focus:border-orange focus:outline-none";
 
 const PROVINCES = ["Koshi", "Madhesh", "Bagmati", "Gandaki", "Lumbini", "Karnali", "Sudurpashchim"];
 
@@ -54,7 +55,14 @@ export default function CheckoutPage() {
         </div>
         <div>
           <label className="mb-1 block text-sm text-navy">Phone</label>
-          <input required value={form.shipping_phone} onChange={update("shipping_phone")} className={inputClass} />
+          <input
+            required
+            type="tel"
+            inputMode="tel"
+            value={form.shipping_phone}
+            onChange={update("shipping_phone")}
+            className={inputClass}
+          />
         </div>
         <div>
           <label className="mb-1 block text-sm text-navy">Address</label>
@@ -94,7 +102,7 @@ export default function CheckoutPage() {
         <button
           type="submit"
           disabled={mutation.isPending}
-          className="rounded bg-orange px-4 py-2 font-medium text-cream hover:opacity-90 disabled:opacity-50"
+          className="min-h-11 rounded bg-orange px-4 py-2 font-medium text-cream hover:opacity-90 disabled:opacity-50"
         >
           {mutation.isPending ? "Placing order…" : "Place order"}
         </button>

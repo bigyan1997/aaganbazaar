@@ -10,14 +10,14 @@ const MAX_IMAGES = 2;
 function StarInput({ rating, onChange }) {
   const [hovered, setHovered] = useState(0);
   return (
-    <div className="flex items-center gap-0.5" onMouseLeave={() => setHovered(0)}>
+    <div className="flex items-center gap-1" onMouseLeave={() => setHovered(0)}>
       {[1, 2, 3, 4, 5].map((n) => (
         <button
           key={n}
           type="button"
           onClick={() => onChange(n)}
           onMouseEnter={() => setHovered(n)}
-          className="p-0.5"
+          className="p-1.5"
           aria-label={`${n} star${n > 1 ? "s" : ""}`}
         >
           <Star
@@ -69,7 +69,7 @@ function ReviewImageStep({ reviewId, onDone }) {
             <button
               type="button"
               onClick={() => handleRemove(img.id)}
-              className="absolute right-0.5 top-0.5 rounded-full bg-navy/70 p-0.5 text-cream"
+              className="absolute right-0.5 top-0.5 rounded-full bg-navy/70 p-1 text-cream"
               aria-label="Remove photo"
             >
               <X size={12} />
@@ -87,7 +87,7 @@ function ReviewImageStep({ reviewId, onDone }) {
       <button
         type="button"
         onClick={finish}
-        className="self-start rounded bg-orange px-3 py-1.5 text-sm font-medium text-cream hover:opacity-90"
+        className="min-h-11 self-start rounded bg-orange px-3 py-1.5 text-sm font-medium text-cream hover:opacity-90"
       >
         Done
       </button>
@@ -143,7 +143,7 @@ export default function ReviewForm({ orderItemId, onSuccess }) {
       <button
         type="submit"
         disabled={mutation.isPending}
-        className="self-start rounded bg-orange px-3 py-1.5 text-sm font-medium text-cream hover:opacity-90 disabled:opacity-50"
+        className="min-h-11 self-start rounded bg-orange px-3 py-1.5 text-sm font-medium text-cream hover:opacity-90 disabled:opacity-50"
       >
         {mutation.isPending ? "Submitting…" : "Submit review"}
       </button>

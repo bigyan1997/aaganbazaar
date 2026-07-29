@@ -62,7 +62,7 @@ export default function CategoryDealsPage() {
               type="button"
               disabled={!hasPrevious}
               onClick={() => goToPage(Number(page) - 1)}
-              className="rounded border border-navy/20 px-3 py-1.5 text-sm disabled:opacity-40"
+              className="min-h-11 rounded border border-navy/20 px-3 py-1.5 text-sm disabled:opacity-40"
             >
               Previous
             </button>
@@ -71,7 +71,7 @@ export default function CategoryDealsPage() {
               type="button"
               disabled={!hasNext}
               onClick={() => goToPage(Number(page) + 1)}
-              className="rounded border border-navy/20 px-3 py-1.5 text-sm disabled:opacity-40"
+              className="min-h-11 rounded border border-navy/20 px-3 py-1.5 text-sm disabled:opacity-40"
             >
               Next
             </button>

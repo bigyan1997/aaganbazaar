@@ -71,7 +71,7 @@ export default function ProductsPage() {
         <select
           value={category}
           onChange={(e) => updateParam("category", e.target.value)}
-          className="rounded border border-navy/20 px-2 py-1.5 text-sm"
+          className="min-h-11 rounded border border-navy/20 px-2 py-1.5 text-sm"
         >
           <option value="">All categories</option>
           {categories?.map((c) => (
@@ -84,7 +84,7 @@ export default function ProductsPage() {
         <select
           value={ordering}
           onChange={(e) => updateParam("ordering", e.target.value)}
-          className="rounded border border-navy/20 px-2 py-1.5 text-sm"
+          className="min-h-11 rounded border border-navy/20 px-2 py-1.5 text-sm"
         >
           <option value="">Sort: Newest</option>
           <option value="price">Price: Low to High</option>
@@ -97,31 +97,37 @@ export default function ProductsPage() {
           <span className="text-sm text-navy-light">Price</span>
           <input
             type="number"
+            inputMode="decimal"
             min="0"
             placeholder="Min"
             value={priceForm.min}
             onChange={(e) => setPriceForm((f) => ({ ...f, min: e.target.value }))}
-            className="w-20 rounded border border-navy/20 px-2 py-1 text-sm"
+            className="min-h-11 w-20 rounded border border-navy/20 px-2 py-1 text-sm"
           />
           <span className="text-navy-light">–</span>
           <input
             type="number"
+            inputMode="decimal"
             min="0"
             placeholder="Max"
             value={priceForm.max}
             onChange={(e) => setPriceForm((f) => ({ ...f, max: e.target.value }))}
-            className="w-20 rounded border border-navy/20 px-2 py-1 text-sm"
+            className="min-h-11 w-20 rounded border border-navy/20 px-2 py-1 text-sm"
           />
-          <button type="submit" className="rounded border border-navy/20 px-3 py-1 text-sm hover:bg-cream">
+          <button
+            type="submit"
+            className="min-h-11 rounded border border-navy/20 px-3 py-1 text-sm hover:bg-cream"
+          >
             Apply
           </button>
         </form>
 
-        <label className="flex items-center gap-1.5 text-sm text-navy-light">
+        <label className="flex min-h-11 items-center gap-1.5 text-sm text-navy-light">
           <input
             type="checkbox"
             checked={inStock}
             onChange={(e) => updateParam("in_stock", e.target.checked ? "true" : "")}
+            className="h-4 w-4"
           />
           In stock only
         </label>
@@ -142,7 +148,7 @@ export default function ProductsPage() {
               type="button"
               disabled={!hasPrevious}
               onClick={() => goToPage(Number(page) - 1)}
-              className="rounded border border-navy/20 px-3 py-1.5 text-sm disabled:opacity-40"
+              className="min-h-11 rounded border border-navy/20 px-3 py-1.5 text-sm disabled:opacity-40"
             >
               Previous
             </button>
@@ -151,7 +157,7 @@ export default function ProductsPage() {
               type="button"
               disabled={!hasNext}
               onClick={() => goToPage(Number(page) + 1)}
-              className="rounded border border-navy/20 px-3 py-1.5 text-sm disabled:opacity-40"
+              className="min-h-11 rounded border border-navy/20 px-3 py-1.5 text-sm disabled:opacity-40"
             >
               Next
             </button>
