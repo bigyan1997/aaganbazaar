@@ -21,10 +21,10 @@ export default function AccountMenu({ user, onLogout }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 rounded-full py-0.5 pl-0.5 pr-2 hover:bg-cream-dark"
+        className="flex items-center gap-1.5 rounded-full py-0.5 pl-0.5 pr-2 hover:bg-white/10"
       >
         <Avatar user={user} size={32} />
-        <ChevronDown size={14} className="text-navy-light" />
+        <ChevronDown size={14} className="text-cream/70" />
       </button>
 
       {open && (
