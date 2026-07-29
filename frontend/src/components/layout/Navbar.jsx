@@ -110,6 +110,13 @@ export default function Navbar() {
                   >
                     Deals
                   </Link>
+                  <Link
+                    to="/stores"
+                    onClick={() => setCategoriesOpen(false)}
+                    className="block px-3.5 py-2.5 text-sm font-medium text-navy hover:bg-cream"
+                  >
+                    Stores
+                  </Link>
                   <div className="my-1 border-t border-cream-dark" />
                   {categories.map((c) => (
                     <Link

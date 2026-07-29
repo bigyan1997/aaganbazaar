@@ -11,7 +11,12 @@ class SellerApplicationSerializer(serializers.ModelSerializer):
 
 
 class SellerPublicSerializer(serializers.ModelSerializer):
+    product_count = serializers.SerializerMethodField()
+
     class Meta:
         model = SellerProfile
-        fields = ("id", "store_name", "slug", "description", "created_at")
+        fields = ("id", "store_name", "slug", "description", "created_at", "product_count")
         read_only_fields = fields
+
+    def get_product_count(self, obj):
+        return obj.products.filter(is_active=True).count()

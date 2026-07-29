@@ -3,7 +3,7 @@ import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { getProducts } from "../../api/catalog";
+import { getCategories, getProducts } from "../../api/catalog";
 
 const MIN_CHARS = 2;
 const DEBOUNCE_MS = 300;
@@ -11,10 +11,13 @@ const DEBOUNCE_MS = 300;
 export default function SearchBar({ className = "", autoFocus = false, onSubmitted, trailingAction }) {
   const [value, setValue] = useState("");
   const [debounced, setDebounced] = useState("");
+  const [category, setCategory] = useState("");
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(-1);
   const navigate = useNavigate();
   const containerRef = useRef(null);
+
+  const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: getCategories });
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(value), DEBOUNCE_MS);
@@ -26,8 +29,8 @@ export default function SearchBar({ className = "", autoFocus = false, onSubmitt
   }, [debounced]);
 
   const { data } = useQuery({
-    queryKey: ["search-suggestions", debounced],
-    queryFn: () => getProducts({ search: debounced, page_size: 5 }),
+    queryKey: ["search-suggestions", debounced, category],
+    queryFn: () => getProducts({ search: debounced, ...(category && { category }), page_size: 5 }),
     enabled: debounced.trim().length >= MIN_CHARS,
     staleTime: 1000 * 30,
   });
@@ -55,7 +58,11 @@ export default function SearchBar({ className = "", autoFocus = false, onSubmitt
 
   const goToSearch = (term) => {
     reset();
-    navigate(term.trim() ? `/products?search=${encodeURIComponent(term.trim())}` : "/products");
+    const params = new URLSearchParams();
+    if (term.trim()) params.set("search", term.trim());
+    if (category) params.set("category", category);
+    const qs = params.toString();
+    navigate(qs ? `/products?${qs}` : "/products");
   };
 
   const handleSubmit = (e) => {
@@ -81,9 +88,27 @@ export default function SearchBar({ className = "", autoFocus = false, onSubmitt
     <div ref={containerRef} className={`relative min-w-0 ${className}`}>
       <form
         onSubmit={handleSubmit}
-        className="flex h-10 min-w-0 items-center rounded-full bg-white pl-4 pr-1"
+        className="flex h-10 min-w-0 items-center rounded-full bg-white pl-1 pr-1"
       >
-        <Search size={16} className="shrink-0 text-navy/40" />
+        {categories?.length > 0 && (
+          <>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              aria-label="Search category"
+              className="h-full max-w-24 shrink-0 rounded-full border-none bg-transparent pl-3 pr-1 text-xs text-navy/70 outline-none sm:max-w-32 sm:text-sm"
+            >
+              <option value="">All categories</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <span className="h-5 w-px shrink-0 bg-cream-dark" />
+          </>
+        )}
+        <Search size={16} className="ml-3 shrink-0 text-navy/40" />
         <input
           type="search"
           autoFocus={autoFocus}

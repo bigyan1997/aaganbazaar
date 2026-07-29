@@ -7,6 +7,7 @@ import {
   Gift,
   Heart,
   MapPin,
+  Percent,
   RotateCcw,
   Shirt,
   ShoppingBag,
@@ -156,6 +157,28 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* Quick links strip */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Link
+          to="/products"
+          className="rounded-xl bg-white/60 p-4 transition hover:shadow-md"
+        >
+          <ShoppingBag size={22} className="text-orange" strokeWidth={1.75} />
+          <p className="mb-0.5 mt-2.5 text-sm font-medium text-navy">Everyday essentials</p>
+          <p className="text-xs text-text-muted">Browse the full catalog</p>
+        </Link>
+        <Link to="/deals" className="rounded-xl bg-white/60 p-4 transition hover:shadow-md">
+          <Percent size={22} className="text-orange" strokeWidth={1.75} />
+          <p className="mb-0.5 mt-2.5 text-sm font-medium text-navy">This week's best prices</p>
+          <p className="text-xs text-text-muted">See every active deal</p>
+        </Link>
+        <Link to="/stores" className="rounded-xl bg-white/60 p-4 transition hover:shadow-md">
+          <Store size={22} className="text-orange" strokeWidth={1.75} />
+          <p className="mb-0.5 mt-2.5 text-sm font-medium text-navy">Support a local shop</p>
+          <p className="text-xs text-text-muted">Browse sellers near you</p>
+        </Link>
+      </div>
 
       {/* Seller banner */}
       {!isSeller && (

@@ -1,5 +1,5 @@
 from django.http import Http404
-from rest_framework import generics, permissions, status
+from rest_framework import filters, generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -44,3 +44,14 @@ class SellerPublicDetailView(generics.RetrieveAPIView):
     serializer_class = SellerPublicSerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = "slug"
+
+
+class SellerListView(generics.ListAPIView):
+    """GET /api/sellers/ - directory of approved stores, for buyers browsing
+    by vendor rather than by product/category."""
+
+    queryset = SellerProfile.objects.filter(status=SellerProfile.Status.APPROVED).order_by("store_name")
+    serializer_class = SellerPublicSerializer
+    permission_classes = [permissions.AllowAny]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["store_name"]

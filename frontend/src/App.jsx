@@ -31,6 +31,7 @@ const SellerApplyPage = lazy(() => import("./pages/seller/SellerApplyPage"));
 const SellerDashboardPage = lazy(() => import("./pages/seller/SellerDashboardPage"));
 const SellerOrdersPage = lazy(() => import("./pages/seller/SellerOrdersPage"));
 const SellerPublicPage = lazy(() => import("./pages/seller/SellerPublicPage"));
+const StoresPage = lazy(() => import("./pages/StoresPage"));
 const WishlistPage = lazy(() => import("./pages/WishlistPage"));
 
 const queryClient = new QueryClient({
@@ -54,6 +55,7 @@ function AppRoutes() {
         <Route path="/deals" element={<DealsHubPage />} />
         <Route path="/deals/:categorySlug" element={<CategoryDealsPage />} />
         <Route path="/sellers/:slug" element={<SellerPublicPage />} />
+        <Route path="/stores" element={<StoresPage />} />
 
         <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
         <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />

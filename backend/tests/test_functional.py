@@ -481,6 +481,32 @@ class TestSellerFunctional(BaseAPITest):
         seller.user.refresh_from_db()
         self.assertEqual(seller.user.role, "seller")
 
+    def test_list_only_shows_approved_sellers(self):
+        approved = self.create_seller(store_name="Approved Store", status=SellerProfile.Status.APPROVED)
+        self.create_seller(store_name="Pending Store", status=SellerProfile.Status.PENDING)
+        r = self.client.get("/api/sellers/")
+        self.assertEqual(r.status_code, 200)
+        names = [s["store_name"] for s in r.data["results"]]
+        self.assertIn(approved.store_name, names)
+        self.assertNotIn("Pending Store", names)
+
+    def test_list_search_by_store_name(self):
+        self.create_seller(store_name="Kathmandu Organics", status=SellerProfile.Status.APPROVED)
+        self.create_seller(store_name="Pokhara Crafts", status=SellerProfile.Status.APPROVED)
+        r = self.client.get("/api/sellers/?search=Kathmandu")
+        names = [s["store_name"] for s in r.data["results"]]
+        self.assertIn("Kathmandu Organics", names)
+        self.assertNotIn("Pokhara Crafts", names)
+
+    def test_list_includes_product_count(self):
+        seller = self.create_seller(status=SellerProfile.Status.APPROVED)
+        self.create_product(seller=seller)
+        self.create_product(seller=seller)
+        self.create_product(seller=seller, is_active=False)
+        r = self.client.get("/api/sellers/")
+        entry = next(s for s in r.data["results"] if s["id"] == seller.id)
+        self.assertEqual(entry["product_count"], 2)
+
 
 # ─── Cart ───────────────────────────────────────────────────────────────────────
 
