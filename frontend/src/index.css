@@ -31,4 +31,29 @@
     background-color: var(--color-cream);
     color: var(--color-navy);
   }
+
+  /* Mobile navbar search expanding open - grows from the icon's position
+     (right-aligned) rather than just fading, so the motion reads as
+     "this icon became this search box" instead of decoration. */
+  @keyframes navbar-search-in {
+    from {
+      opacity: 0;
+      transform: scaleX(0.85);
+    }
+    to {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    @keyframes navbar-search-in {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+  }
 }
