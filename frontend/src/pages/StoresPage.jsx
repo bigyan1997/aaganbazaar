@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { getSellers } from "../api/sellers";
+import StarRating from "../components/catalog/StarRating";
 
 export default function StoresPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -29,14 +30,18 @@ export default function StoresPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-xl font-semibold text-navy">Stores</h1>
-        <p className="text-sm text-navy-light">Browse local sellers on Aaganbazaar</p>
+        <p className="text-sm text-navy-light">
+          {typeof data?.count === "number"
+            ? `${data.count} local ${data.count === 1 ? "store" : "stores"} on Aaganbazaar`
+            : "Browse local sellers on Aaganbazaar"}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex max-w-sm gap-2">
         <input
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search stores"
+          placeholder="Search stores by name"
           className="min-h-11 flex-1 rounded border border-navy/20 px-3 py-1.5 text-sm focus:border-orange focus:outline-none"
         />
         <button
@@ -50,28 +55,47 @@ export default function StoresPage() {
       {isLoading ? (
         <p className="text-navy/60">Loading…</p>
       ) : stores.length ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {stores.map((seller) => (
-            <Link
+            <div
               key={seller.id}
-              to={`/sellers/${seller.slug}`}
-              className="flex flex-col gap-2 rounded-xl border border-cream-dark bg-white/60 p-4 transition hover:shadow-md"
+              className="flex flex-col gap-3 rounded-xl border border-cream-dark bg-white/60 p-4 transition hover:shadow-md"
             >
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-cream text-orange">
-                  <Store size={20} strokeWidth={1.75} />
+              <div className="flex items-start gap-3">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-cream text-orange">
+                  {seller.logo ? (
+                    <img src={seller.logo} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  ) : (
+                    <Store size={24} strokeWidth={1.75} />
+                  )}
                 </div>
-                <div className="min-w-0">
-                  <p className="truncate font-medium text-navy">{seller.store_name}</p>
-                  <p className="text-xs text-navy-light">
-                    {seller.product_count} {seller.product_count === 1 ? "product" : "products"}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] text-text-muted">
+                    Since {new Date(seller.created_at).getFullYear()}
                   </p>
+                  <p className="truncate font-medium text-navy">{seller.store_name}</p>
+                  {seller.average_rating != null && (
+                    <StarRating rating={seller.average_rating} size={12} />
+                  )}
                 </div>
               </div>
+
               {seller.description && (
                 <p className="line-clamp-2 text-sm text-navy/70">{seller.description}</p>
               )}
-            </Link>
+
+              <div className="mt-auto flex items-center justify-between gap-2 border-t border-cream-dark pt-3">
+                <span className="rounded bg-cream px-2 py-1 text-xs font-medium text-navy">
+                  {seller.product_count} {seller.product_count === 1 ? "product" : "products"}
+                </span>
+                <Link
+                  to={`/sellers/${seller.slug}`}
+                  className="flex min-h-11 items-center rounded-lg bg-orange px-3 text-sm font-medium text-cream hover:opacity-90"
+                >
+                  Visit Store →
+                </Link>
+              </div>
+            </div>
           ))}
         </div>
       ) : (

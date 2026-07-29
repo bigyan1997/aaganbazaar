@@ -22,6 +22,7 @@ class SellerProfile(models.Model):
     slug = models.SlugField(max_length=170, unique=True, blank=True)
     description = models.TextField(blank=True)
     contact_phone = models.CharField(max_length=15, blank=True)
+    logo = models.ImageField(upload_to="seller-logos/", blank=True, null=True)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     # Per-seller override of settings.DEFAULT_COMMISSION_RATE. Null = use the platform default.
     commission_rate = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)

@@ -1,3 +1,4 @@
+from django.db.models import Avg
 from django.http import Http404
 from rest_framework import filters, generics, permissions, status
 from rest_framework.exceptions import ValidationError
@@ -50,7 +51,11 @@ class SellerListView(generics.ListAPIView):
     """GET /api/sellers/ - directory of approved stores, for buyers browsing
     by vendor rather than by product/category."""
 
-    queryset = SellerProfile.objects.filter(status=SellerProfile.Status.APPROVED).order_by("store_name")
+    queryset = (
+        SellerProfile.objects.filter(status=SellerProfile.Status.APPROVED)
+        .annotate(average_rating=Avg("products__reviews__rating"))
+        .order_by("store_name")
+    )
     serializer_class = SellerPublicSerializer
     permission_classes = [permissions.AllowAny]
     filter_backends = [filters.SearchFilter]

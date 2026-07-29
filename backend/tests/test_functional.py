@@ -507,6 +507,25 @@ class TestSellerFunctional(BaseAPITest):
         entry = next(s for s in r.data["results"] if s["id"] == seller.id)
         self.assertEqual(entry["product_count"], 2)
 
+    def test_list_includes_average_rating(self):
+        from apps.reviews.models import Review
+
+        seller = self.create_seller(status=SellerProfile.Status.APPROVED)
+        product = self.create_product(seller=seller)
+        _, _, order_item = self.create_order(product=product, status="delivered")
+        Review.objects.create(product=product, buyer=order_item.seller_order.order.buyer, order_item=order_item, rating=4)
+
+        r = self.client.get("/api/sellers/")
+        entry = next(s for s in r.data["results"] if s["id"] == seller.id)
+        self.assertEqual(entry["average_rating"], 4.0)
+
+    def test_list_average_rating_null_when_no_reviews(self):
+        seller = self.create_seller(status=SellerProfile.Status.APPROVED)
+        self.create_product(seller=seller)
+        r = self.client.get("/api/sellers/")
+        entry = next(s for s in r.data["results"] if s["id"] == seller.id)
+        self.assertIsNone(entry["average_rating"])
+
 
 # ─── Cart ───────────────────────────────────────────────────────────────────────
 
