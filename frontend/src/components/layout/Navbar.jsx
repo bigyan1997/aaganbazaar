@@ -10,6 +10,7 @@ import { getSellerOrders } from "../../api/orders";
 import logoIcon from "../../assets/logo-icon.png";
 import useAuthStore from "../../store/authStore";
 import AccountMenu from "./AccountMenu";
+import SearchBar from "./SearchBar";
 
 const clusterLinkClass =
   "flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-1.5 text-cream hover:bg-white/10 hover:text-white";
@@ -21,11 +22,9 @@ export default function Navbar() {
   const clear = useAuthStore((s) => s.clear);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const categoriesRef = useRef(null);
-  const mobileSearchInputRef = useRef(null);
 
   const { data: cart } = useQuery({
     queryKey: ["cart"],
@@ -52,17 +51,6 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (mobileSearchOpen) mobileSearchInputRef.current?.focus();
-  }, [mobileSearchOpen]);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    navigate(search.trim() ? `/products?search=${encodeURIComponent(search.trim())}` : "/products");
-    setSearch("");
-    setMobileSearchOpen(false);
-  };
-
   const handleLogout = async () => {
     try {
       await logout();
@@ -78,29 +66,25 @@ export default function Navbar() {
       <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-2.5 sm:gap-3">
         {/* Mobile expanded search - takes over the row, sm+ never sees this */}
         {mobileSearchOpen && (
-          <form
-            onSubmit={handleSearch}
+          <div
             style={{ transformOrigin: "right center", animation: "navbar-search-in 200ms ease-out" }}
-            className="flex h-10 w-full min-w-0 items-center gap-1 rounded-full bg-white pl-4 pr-1 sm:hidden"
+            className="w-full sm:hidden"
           >
-            <Search size={16} className="shrink-0 text-navy/40" />
-            <input
-              ref={mobileSearchInputRef}
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search for products"
-              className="min-w-0 flex-1 border-none bg-transparent text-sm text-navy outline-none placeholder:text-navy/40"
+            <SearchBar
+              autoFocus
+              onSubmitted={() => setMobileSearchOpen(false)}
+              trailingAction={
+                <button
+                  type="button"
+                  onClick={() => setMobileSearchOpen(false)}
+                  aria-label="Close search"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-navy/50 hover:bg-cream"
+                >
+                  <X size={18} />
+                </button>
+              }
             />
-            <button
-              type="button"
-              onClick={() => setMobileSearchOpen(false)}
-              aria-label="Close search"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-navy/50 hover:bg-cream"
-            >
-              <X size={18} />
-            </button>
-          </form>
+          </div>
         )}
 
         {/* Normal row - hidden on mobile while search is expanded, always shown sm+ */}
@@ -154,26 +138,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop/tablet search - always visible, sm and up */}
-          <form
-            onSubmit={handleSearch}
-            className="hidden h-10 min-w-0 flex-1 items-center rounded-full bg-white pl-4 pr-1 sm:flex"
-          >
-            <Search size={16} className="shrink-0 text-navy/40" />
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search for products"
-              className="ml-2 min-w-0 flex-1 border-none bg-transparent text-sm text-navy outline-none placeholder:text-navy/40"
-            />
-            <button
-              type="submit"
-              aria-label="Search"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange text-white hover:bg-orange-dark"
-            >
-              <Search size={16} />
-            </button>
-          </form>
+          <SearchBar className="hidden flex-1 sm:block" />
 
           {/* Mobile search trigger - icon only, expands the form above on tap */}
           <button
