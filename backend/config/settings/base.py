@@ -130,17 +130,15 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PAGINATION_CLASS": "apps.common.pagination.StandardPagination",
     "PAGE_SIZE": 20,
-    # Anon/user rates are a baseline abuse guard on every endpoint. Scoped rates
-    # (login/register/password_reset) exist for apps.accounts.throttles - Phase 2
-    # wires them onto the actual auth views.
-    "DEFAULT_THROTTLE_CLASSES": (
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
-        "rest_framework.throttling.ScopedRateThrottle",
-    ),
+    # No blanket anon/user throttle here on purpose - a global "100/hour per IP"
+    # applies to every request including plain public reads (categories,
+    # products, banners), and a single page load can easily fire 5+ parallel
+    # GETs, so it starves normal browsing rather than stopping abuse. Instead,
+    # each genuinely abuse-prone view (login/register/google-login/password-
+    # reset/resend-verification, see apps.accounts.throttles) declares its own
+    # explicit throttle_classes - deliberate per-view opt-in, not a global default.
+    "DEFAULT_THROTTLE_CLASSES": (),
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "100/hour",
-        "user": "1000/hour",
         "login": "5/min",
         "register": "3/min",
         "password_reset": "3/hour",
