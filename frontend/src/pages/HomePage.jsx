@@ -22,7 +22,6 @@ import { getCategories, getCategoryDeals, getProducts } from "../api/catalog";
 import ProductCard from "../components/catalog/ProductCard";
 import BannerCarousel from "../components/home/BannerCarousel";
 import DealCategoryTile from "../components/home/DealCategoryTile";
-import DealCountdown from "../components/home/DealCountdown";
 import ProductTabs from "../components/home/ProductTabs";
 import useAuthStore from "../store/authStore";
 
@@ -110,13 +109,10 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Deal of the Day - featured deal + countdown, rest of the deals alongside */}
+      {/* Deal of the Day - featured deal, rest of the deals alongside */}
       {topDeal && !loadingDeals && (
         <div>
-          <div className="mb-2.5 flex items-center justify-between">
-            <p className="text-[15px] font-medium text-navy">Deal of the Day</p>
-            <DealCountdown />
-          </div>
+          <p className="mb-2.5 text-[15px] font-medium text-navy">Deal of the Day</p>
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
             {/* The featured tile only spans 2 rows when there's enough
                 inventory to fill both of them (cols 2-5 x 2 rows = 4+
