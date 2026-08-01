@@ -24,7 +24,12 @@ const DealsHubPage = lazy(() => import("./pages/DealsHubPage"));
 const CategoryDealsPage = lazy(() => import("./pages/CategoryDealsPage"));
 const ComparePage = lazy(() => import("./pages/ComparePage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
-const AccountPage = lazy(() => import("./pages/AccountPage"));
+const AccountLayout = lazy(() => import("./pages/account/AccountLayout"));
+const ProfilePage = lazy(() => import("./pages/account/ProfilePage"));
+const AddressesPage = lazy(() => import("./pages/account/AddressesPage"));
+const SecurityPage = lazy(() => import("./pages/account/SecurityPage"));
+const NotificationsPage = lazy(() => import("./pages/account/NotificationsPage"));
+const MyReviewsPage = lazy(() => import("./pages/account/MyReviewsPage"));
 const CheckoutPage = lazy(() => import("./pages/orders/CheckoutPage"));
 const OrderDetailPage = lazy(() => import("./pages/orders/OrderDetailPage"));
 const OrderInvoicePage = lazy(() => import("./pages/orders/OrderInvoicePage"));
@@ -39,6 +44,8 @@ const AboutPage = lazy(() => import("./pages/info/AboutPage"));
 const ContactPage = lazy(() => import("./pages/info/ContactPage"));
 const TermsPage = lazy(() => import("./pages/info/TermsPage"));
 const PrivacyPage = lazy(() => import("./pages/info/PrivacyPage"));
+const FAQPage = lazy(() => import("./pages/info/FAQPage"));
+const CategoriesPage = lazy(() => import("./pages/CategoriesPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,6 +65,7 @@ function AppRoutes() {
         <Route path="/" element={<HomePage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/:slug" element={<ProductDetailPage />} />
+        <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/deals" element={<DealsHubPage />} />
         <Route path="/deals/:categorySlug" element={<CategoryDealsPage />} />
         <Route path="/sellers/:slug" element={<SellerPublicPage />} />
@@ -67,8 +75,15 @@ function AppRoutes() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/faq" element={<FAQPage />} />
 
-        <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
+        <Route path="/account" element={<ProtectedRoute><AccountLayout /></ProtectedRoute>}>
+          <Route index element={<ProfilePage />} />
+          <Route path="addresses" element={<AddressesPage />} />
+          <Route path="security" element={<SecurityPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="reviews" element={<MyReviewsPage />} />
+        </Route>
         <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
         <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
         <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />

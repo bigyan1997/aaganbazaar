@@ -9,6 +9,7 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.test import override_settings
 
+from apps.accounts.models import Address
 from apps.sellers.models import SellerProfile
 
 from .base import BaseAPITest, TEST_SETTINGS
@@ -157,6 +158,142 @@ class TestAuthFunctional(BaseAPITest):
     def test_password_reset_request_always_200(self):
         r = self.client.post("/api/auth/password-reset/", {"email": "nobody@test.com"}, format="json")
         self.assertEqual(r.status_code, 200)
+
+    def test_profile_patch_updates_editable_fields(self):
+        user = self.create_user()
+        self.authenticate(user)
+        r = self.client.patch(
+            "/api/auth/me/", {"first_name": "New", "phone_number": "9811111111"}, format="json"
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["first_name"], "New")
+        self.assertEqual(r.data["phone_number"], "9811111111")
+
+    def test_profile_patch_cannot_touch_role(self):
+        user = self.create_user()
+        self.authenticate(user)
+        r = self.client.patch("/api/auth/me/", {"role": "admin"}, format="json")
+        self.assertEqual(r.status_code, 200)
+        user.refresh_from_db()
+        self.assertEqual(user.role, "buyer")
+
+    def test_profile_patch_changing_phone_resets_verification(self):
+        user = self.create_user(phone_number="9800000000", is_phone_verified=True)
+        self.authenticate(user)
+        r = self.client.patch("/api/auth/me/", {"phone_number": "9822222222"}, format="json")
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(r.data["is_phone_verified"])
+
+    def test_change_password_requires_current_password(self):
+        user = self.create_user(password="OldPass1234")
+        self.authenticate(user)
+        r = self.client.post(
+            "/api/auth/change-password/",
+            {"current_password": "WrongPass1234", "new_password": "NewPass12345", "new_password2": "NewPass12345"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 400)
+
+    def test_change_password_success(self):
+        user = self.create_user(password="OldPass1234")
+        self.authenticate(user)
+        r = self.client.post(
+            "/api/auth/change-password/",
+            {"current_password": "OldPass1234", "new_password": "NewPass12345", "new_password2": "NewPass12345"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 200)
+        user.refresh_from_db()
+        self.assertTrue(user.check_password("NewPass12345"))
+
+    def test_change_password_rejected_for_google_account(self):
+        user = self.create_user(auth_provider="google")
+        user.set_unusable_password()
+        user.save()
+        self.authenticate(user)
+        r = self.client.post(
+            "/api/auth/change-password/",
+            {"current_password": "x", "new_password": "NewPass12345", "new_password2": "NewPass12345"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 400)
+
+    def test_addresses_require_auth(self):
+        r = self.client.get("/api/auth/addresses/")
+        self.assertEqual(r.status_code, 401)
+
+    def test_first_address_becomes_default(self):
+        self.authenticate()
+        r = self.client.post(
+            "/api/auth/addresses/",
+            {
+                "full_name": "A",
+                "phone": "9800000000",
+                "address_line": "Line 1",
+                "city": "Kathmandu",
+                "district": "Kathmandu",
+                "province": "Bagmati",
+            },
+            format="json",
+        )
+        self.assertEqual(r.status_code, 201)
+        self.assertTrue(r.data["is_default"])
+
+    def test_setting_new_default_unsets_previous(self):
+        user = self.authenticate()
+        first = self.client.post(
+            "/api/auth/addresses/",
+            {"full_name": "A", "phone": "9800000000", "address_line": "L1", "city": "KTM",
+             "district": "KTM", "province": "Bagmati"},
+            format="json",
+        ).data
+        second = self.client.post(
+            "/api/auth/addresses/",
+            {"full_name": "B", "phone": "9800000001", "address_line": "L2", "city": "PKR",
+             "district": "PKR", "province": "Gandaki", "is_default": True},
+            format="json",
+        ).data
+        self.assertTrue(second["is_default"])
+        r = self.client.get(f"/api/auth/addresses/{first['id']}/")
+        self.assertFalse(r.data["is_default"])
+
+    def test_address_list_scoped_to_owner(self):
+        owner = self.create_user()
+        other = self.create_user()
+        Address.objects.create(
+            user=owner, full_name="A", phone="1", address_line="L", city="C", district="D", province="P"
+        )
+        self.authenticate(other)
+        r = self.client.get("/api/auth/addresses/")
+        self.assertEqual(r.data, [])
+
+    def test_cannot_edit_others_address(self):
+        owner = self.create_user()
+        Address = __import__("apps.accounts.models", fromlist=["Address"]).Address
+        addr = Address.objects.create(
+            user=owner, full_name="A", phone="1", address_line="L", city="C", district="D", province="P"
+        )
+        self.authenticate()  # a different user
+        r = self.client.patch(f"/api/auth/addresses/{addr.id}/", {"city": "Hacked"}, format="json")
+        self.assertEqual(r.status_code, 404)
+
+    def test_deleting_default_address_promotes_another(self):
+        self.authenticate()
+        first = self.client.post(
+            "/api/auth/addresses/",
+            {"full_name": "A", "phone": "1", "address_line": "L1", "city": "KTM", "district": "KTM",
+             "province": "Bagmati"},
+            format="json",
+        ).data
+        second = self.client.post(
+            "/api/auth/addresses/",
+            {"full_name": "B", "phone": "2", "address_line": "L2", "city": "PKR", "district": "PKR",
+             "province": "Gandaki"},
+            format="json",
+        ).data
+        self.client.delete(f"/api/auth/addresses/{first['id']}/")
+        r = self.client.get(f"/api/auth/addresses/{second['id']}/")
+        self.assertTrue(r.data["is_default"])
 
 
 # ─── Catalog ────────────────────────────────────────────────────────────────────
@@ -722,6 +859,24 @@ class TestOrderFunctional(BaseAPITest):
         product.refresh_from_db()
         self.assertEqual(product.stock_quantity, 5)  # unchanged - refunds don't auto-restock
 
+    @patch("apps.orders.emails.send_email")
+    def test_refund_email_skipped_when_buyer_opted_out(self, mock_send_email):
+        from apps.orders.emails import send_refund_email
+
+        buyer = self.create_user(email_order_updates=False)
+        _, seller_order, _ = self.create_order(buyer=buyer, status="delivered")
+        send_refund_email(seller_order)
+        mock_send_email.assert_not_called()
+
+    @patch("apps.orders.emails.send_email")
+    def test_refund_email_sent_when_buyer_opted_in(self, mock_send_email):
+        from apps.orders.emails import send_refund_email
+
+        buyer = self.create_user(email_order_updates=True)
+        _, seller_order, _ = self.create_order(buyer=buyer, status="delivered")
+        send_refund_email(seller_order)
+        mock_send_email.assert_called_once()
+
 
 # ─── Reviews ────────────────────────────────────────────────────────────────────
 
@@ -845,6 +1000,30 @@ class TestReviewFunctional(BaseAPITest):
 
         r = self.client.delete(f"/api/reviews/images/{image_id}/")
         self.assertEqual(r.status_code, 204)
+
+    def test_my_reviews_requires_auth(self):
+        r = self.client.get("/api/reviews/")
+        self.assertEqual(r.status_code, 401)
+
+    def test_my_reviews_lists_own_only(self):
+        buyer = self.create_user()
+        self._make_review(buyer)  # authenticates as buyer and creates one review
+        other_id = self._make_review(self.create_user())
+
+        self.authenticate(buyer)
+        r = self.client.get("/api/reviews/")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(r.data["results"]), 1)
+        self.assertNotEqual(r.data["results"][0]["id"], other_id)
+
+    def test_my_reviews_includes_product_info(self):
+        buyer = self.create_user()
+        review_id = self._make_review(buyer)
+        self.authenticate(buyer)
+        r = self.client.get("/api/reviews/")
+        entry = next(e for e in r.data["results"] if e["id"] == review_id)
+        self.assertIn("product_name", entry)
+        self.assertIn("product_slug", entry)
 
 
 # ─── Wishlist ───────────────────────────────────────────────────────────────────

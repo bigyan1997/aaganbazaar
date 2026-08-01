@@ -7,7 +7,7 @@ import { extractErrorMessage } from "../../utils/errors";
 
 const MAX_IMAGES = 2;
 
-function StarInput({ rating, onChange }) {
+export function StarInput({ rating, onChange }) {
   const [hovered, setHovered] = useState(0);
   return (
     <div className="flex items-center gap-1" onMouseLeave={() => setHovered(0)}>

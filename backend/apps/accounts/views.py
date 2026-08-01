@@ -6,7 +6,8 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from google.auth.exceptions import GoogleAuthError
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
-from rest_framework import permissions, status
+from rest_framework import generics, permissions, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
@@ -14,9 +15,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .cookies import clear_auth_cookies, set_auth_cookies
 from .emails import send_password_reset_email, send_verification_email
+from .models import Address
 from .serializers import (
+    AddressSerializer,
+    ChangePasswordSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
+    ProfileUpdateSerializer,
     RegisterSerializer,
     UserSerializer,
     _generate_unique_username,
@@ -154,12 +159,74 @@ class LogoutView(APIView):
 
 
 class MeView(APIView):
-    """GET /api/auth/me/"""
+    """GET /api/auth/me/, PATCH /api/auth/me/ - profile self-edit."""
 
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         return Response(UserSerializer(request.user).data)
+
+    def patch(self, request):
+        serializer = ProfileUpdateSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(UserSerializer(request.user).data)
+
+
+class ChangePasswordView(APIView):
+    """POST /api/auth/change-password/ - authenticated password change,
+    distinct from the uid/token email-reset flow above."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        if not user.has_usable_password():
+            raise ValidationError("This account signs in with Google and has no password to change.")
+
+        serializer = ChangePasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if not user.check_password(serializer.validated_data["current_password"]):
+            raise ValidationError({"current_password": "Current password is incorrect."})
+
+        user.set_password(serializer.validated_data["new_password"])
+        user.save(update_fields=["password"])
+        return Response({"detail": "Password changed."})
+
+
+class AddressListCreateView(generics.ListCreateAPIView):
+    """GET/POST /api/auth/addresses/ - the buyer's own saved addresses."""
+
+    serializer_class = AddressSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
+
+    def get_queryset(self):
+        return Address.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        is_first = not Address.objects.filter(user=self.request.user).exists()
+        serializer.save(user=self.request.user, is_default=is_first or serializer.validated_data.get("is_default", False))
+
+
+class AddressDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """GET/PATCH/DELETE /api/auth/addresses/<id>/ - owner only."""
+
+    serializer_class = AddressSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Address.objects.filter(user=self.request.user)
+
+    def perform_destroy(self, instance):
+        was_default = instance.is_default
+        user = instance.user
+        instance.delete()
+        if was_default:
+            fallback = Address.objects.filter(user=user).first()
+            if fallback:
+                fallback.is_default = True
+                fallback.save(update_fields=["is_default"])
 
 
 class VerifyEmailView(APIView):

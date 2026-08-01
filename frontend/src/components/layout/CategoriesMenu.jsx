@@ -74,6 +74,14 @@ export default function CategoriesMenu({ variant = "icon" }) {
               {c.name}
             </Link>
           ))}
+          <div className="my-1 border-t border-cream-dark" />
+          <Link
+            to="/categories"
+            onClick={() => setOpen(false)}
+            className="block px-3.5 py-2.5 text-sm font-medium text-navy/70 hover:bg-cream"
+          >
+            View all categories →
+          </Link>
         </div>
       )}
     </div>

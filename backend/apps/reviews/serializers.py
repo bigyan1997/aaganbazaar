@@ -37,3 +37,39 @@ class ReviewSerializer(serializers.ModelSerializer):
         validated_data["product"] = order_item.product
         validated_data["buyer"] = self.context["request"].user
         return super().create(validated_data)
+
+
+class MyReviewSerializer(serializers.ModelSerializer):
+    """GET /api/reviews/ (own reviews) - unlike ReviewSerializer (used on
+    product pages, where the product is already known from context), this
+    lists reviews across many products, so it nests enough of the product
+    to link back to it."""
+
+    product_name = serializers.CharField(source="product.name", read_only=True)
+    product_slug = serializers.CharField(source="product.slug", read_only=True)
+    product_image = serializers.SerializerMethodField()
+    images = ReviewImageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Review
+        fields = (
+            "id",
+            "product",
+            "product_name",
+            "product_slug",
+            "product_image",
+            "rating",
+            "comment",
+            "images",
+            "created_at",
+        )
+        read_only_fields = fields
+
+    def get_product_image(self, obj):
+        img = next((i for i in obj.product.images.all() if i.is_primary), None) or next(
+            iter(obj.product.images.all()), None
+        )
+        if not img:
+            return None
+        request = self.context.get("request")
+        return request.build_absolute_uri(img.image.url) if request else img.image.url

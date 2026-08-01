@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from apps.orders.models import OrderItem, SellerOrder
 
 from .models import Review, ReviewImage
-from .serializers import ReviewImageSerializer, ReviewSerializer
+from .serializers import MyReviewSerializer, ReviewImageSerializer, ReviewSerializer
 
 
 class ProductReviewListView(generics.ListAPIView):
@@ -45,11 +45,22 @@ class ReviewableOrderItemView(APIView):
         return Response({"order_item_id": item.id if item else None})
 
 
-class ReviewCreateView(generics.CreateAPIView):
-    """POST /api/reviews/"""
+class ReviewListCreateView(generics.ListCreateAPIView):
+    """GET /api/reviews/ - the current buyer's own reviews (never anyone
+    else's - product pages use ProductReviewListView for the public,
+    per-product list). POST /api/reviews/ - create."""
 
-    serializer_class = ReviewSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_serializer_class(self):
+        return MyReviewSerializer if self.request.method == "GET" else ReviewSerializer
+
+    def get_queryset(self):
+        return (
+            Review.objects.filter(buyer=self.request.user)
+            .select_related("product")
+            .prefetch_related("product__images", "images")
+        )
 
 
 class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):

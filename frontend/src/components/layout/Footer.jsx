@@ -17,6 +17,9 @@ export default function Footer() {
             <Link to="/compare" className="mb-1 block hover:text-orange">
               Compare products
             </Link>
+            <Link to="/faq" className="mb-1 block hover:text-orange">
+              Help & FAQ
+            </Link>
             <Link to="/contact" className="block hover:text-orange">
               Contact us
             </Link>
@@ -25,6 +28,9 @@ export default function Footer() {
             <p className="mb-2 font-medium text-navy">Company</p>
             <Link to="/about" className="mb-1 block hover:text-orange">
               About us
+            </Link>
+            <Link to="/categories" className="mb-1 block hover:text-orange">
+              Categories
             </Link>
             <Link to="/stores" className="mb-1 block hover:text-orange">
               Stores

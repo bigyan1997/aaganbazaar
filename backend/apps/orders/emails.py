@@ -30,6 +30,8 @@ def send_new_order_email(seller_order):
 
 def send_refund_email(seller_order):
     buyer = seller_order.order.buyer
+    if not buyer.email_order_updates:
+        return
     body = f"""
 <p style="font-size:14px;color:#333;line-height:1.7;">Hi {buyer.first_name or buyer.email},</p>
 <p style="font-size:14px;color:#333;line-height:1.7;">

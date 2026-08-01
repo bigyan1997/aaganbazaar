@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -34,6 +35,10 @@ class User(AbstractUser):
     # the same address later signs in with Google too).
     auth_provider = models.CharField(max_length=10, choices=AuthProvider.choices, default=AuthProvider.EMAIL)
     avatar_url = models.URLField(blank=True)
+    # Gates buyer-facing order-status emails (e.g. refund notices) - not
+    # account/security mail like verification or password reset, which
+    # always sends regardless of this preference.
+    email_order_updates = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -43,3 +48,30 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+
+class Address(models.Model):
+    """A buyer's saved shipping address. Checkout still snapshots flat
+    shipping_* fields onto orders.Order rather than FK'ing here, so order
+    history stays accurate even if this address is later edited or deleted."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="addresses")
+    full_name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=15)
+    address_line = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+    district = models.CharField(max_length=100)
+    province = models.CharField(max_length=100)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-is_default", "-created_at"]
+
+    def __str__(self):
+        return f"{self.full_name} - {self.city}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.is_default:
+            Address.objects.filter(user_id=self.user_id).exclude(pk=self.pk).update(is_default=False)
