@@ -1,16 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   Baby,
-  Banknote,
   BookOpen,
-  Coins,
   Gift,
   Heart,
-  MapPin,
   Percent,
   RotateCcw,
   Shirt,
   ShoppingBag,
+  ShieldCheck,
   Smartphone,
   Sofa,
   Sparkles,
@@ -24,6 +22,8 @@ import { getCategories, getCategoryDeals, getProducts } from "../api/catalog";
 import ProductCard from "../components/catalog/ProductCard";
 import BannerCarousel from "../components/home/BannerCarousel";
 import DealCategoryTile from "../components/home/DealCategoryTile";
+import DealCountdown from "../components/home/DealCountdown";
+import ProductTabs from "../components/home/ProductTabs";
 import useAuthStore from "../store/authStore";
 
 const CATEGORY_ICONS = [
@@ -37,6 +37,15 @@ const CATEGORY_ICONS = [
   [/book/i, BookOpen],
 ];
 
+const TRUST_BADGES = [
+  { icon: Percent, title: "Best prices & offers", subtitle: "Deals updated daily" },
+  { icon: Truck, title: "Nationwide delivery", subtitle: "Even outside the valley" },
+  { icon: Wallet, title: "eSewa & Khalti", subtitle: "Plus cash on delivery" },
+  { icon: RotateCcw, title: "Easy returns", subtitle: "Hassle-free process" },
+  { icon: ShieldCheck, title: "Safe delivery", subtitle: "Tracked, every order" },
+  { icon: Heart, title: "Local sellers", subtitle: "Every shop is Nepal based" },
+];
+
 function iconForCategory(name) {
   return CATEGORY_ICONS.find(([pattern]) => pattern.test(name))?.[1] ?? Store;
 }
@@ -47,14 +56,6 @@ export default function HomePage() {
   const isSeller = status === "authenticated" && user?.role === "seller";
 
   const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: getCategories });
-  const { data: newArrivals, isLoading: loadingNew } = useQuery({
-    queryKey: ["products", { page_size: 5, ordering: "-created_at" }],
-    queryFn: () => getProducts({ page_size: 5, ordering: "-created_at" }),
-    // Shorter than the global default - a seller deactivating/updating a
-    // product should show up here within half a minute of a buyer
-    // revisiting, not sit stale for the full 5-minute default.
-    staleTime: 1000 * 30,
-  });
   const { data: flashDeals, isLoading: loadingDeals } = useQuery({
     queryKey: ["products", { page_size: 5, on_sale: "true", ordering: "-discount_percent" }],
     queryFn: () => getProducts({ page_size: 5, on_sale: "true", ordering: "-discount_percent" }),
@@ -66,29 +67,23 @@ export default function HomePage() {
     staleTime: 0,
   });
 
+  const topDeal = flashDeals?.results?.[0];
+  const restOfDeals = flashDeals?.results?.slice(1) ?? [];
+
   return (
-    <div className="flex flex-col gap-7">
+    <div className="flex flex-col gap-8">
       {/* Hero / admin-managed banner */}
       <BannerCarousel />
 
-      {/* Trust row */}
-      <div className="grid grid-cols-2 gap-2.5 text-xs text-navy-light md:grid-cols-4">
-        <div className="flex items-center gap-1.5">
-          <Wallet size={15} className="text-orange" />
-          eSewa and Khalti
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Banknote size={15} className="text-orange" />
-          Cash on delivery
-        </div>
-        <div className="flex items-center gap-1.5">
-          <MapPin size={15} className="text-orange" />
-          Nationwide delivery
-        </div>
-        <div className="flex items-center gap-1.5">
-          <RotateCcw size={15} className="text-orange" />
-          Easy returns
-        </div>
+      {/* Trust badges - Nest-style icon boxes */}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+        {TRUST_BADGES.map(({ icon: Icon, title, subtitle }) => (
+          <div key={title} className="rounded-lg bg-white/60 p-3 text-center sm:text-left">
+            <Icon size={20} className="mx-auto text-orange sm:mx-0" strokeWidth={1.75} />
+            <p className="mt-2 text-xs font-medium text-navy">{title}</p>
+            <p className="text-[10px] text-text-muted">{subtitle}</p>
+          </div>
+        ))}
       </div>
 
       {/* Shop by category */}
@@ -104,7 +99,9 @@ export default function HomePage() {
                   to={`/products?category=${c.slug}`}
                   className="rounded-lg bg-white/60 px-1 py-2.5 text-center hover:bg-white"
                 >
-                  <Icon size={18} className="mx-auto text-orange" strokeWidth={1.75} />
+                  <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-cream">
+                    <Icon size={18} className="text-orange" strokeWidth={1.75} />
+                  </div>
                   <p className="mt-1.5 text-[10px] text-navy-light">{c.name}</p>
                 </Link>
               );
@@ -113,33 +110,31 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* New arrivals */}
-      <div>
-        <p className="mb-2.5 text-[15px] font-medium text-navy">New Arrivals</p>
-        {loadingNew ? (
-          <p className="text-sm text-navy/60">Loading…</p>
-        ) : newArrivals?.results?.length ? (
-          <div className="grid grid-cols-2 gap-2.5 md:grid-cols-5">
-            {newArrivals.results.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-navy/60">No products yet — check back soon.</p>
-        )}
-      </div>
-
-      {/* Flash deals */}
-      {flashDeals?.results?.length > 0 && !loadingDeals && (
+      {/* Deal of the Day - featured deal + countdown, rest of the deals alongside */}
+      {topDeal && !loadingDeals && (
         <div>
-          <p className="mb-2.5 text-[15px] font-medium text-navy">Flash Deals</p>
-          <div className="grid grid-cols-2 gap-2.5 md:grid-cols-5">
-            {flashDeals.results.map((product) => (
+          <div className="mb-2.5 flex items-center justify-between">
+            <p className="text-[15px] font-medium text-navy">Deal of the Day</p>
+            <DealCountdown />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
+            {/* The featured tile only spans 2 rows when there's enough
+                inventory to fill both of them (cols 2-5 x 2 rows = 4+
+                items) - otherwise row 2 is empty and row-span-2 reserves
+                its height anyway, leaving a dead gap before the next
+                section. */}
+            <div className={restOfDeals.length >= 4 ? "col-span-2 sm:col-span-1 sm:row-span-2" : "col-span-2 sm:col-span-1"}>
+              <ProductCard product={topDeal} />
+            </div>
+            {restOfDeals.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
         </div>
       )}
+
+      {/* Tabbed product carousel - New Arrivals / Top Rated / Best Deals / Budget Picks */}
+      <ProductTabs />
 
       {/* Shop deals by category */}
       {dealCategories?.length > 0 && (
@@ -158,12 +153,25 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* Lifestyle promo banner */}
+      <div className="flex flex-col items-start gap-3 rounded-2xl bg-cream-dark p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="mb-1 text-lg font-medium text-navy">Support a neighbourhood shop today</p>
+          <p className="text-xs text-text-muted">
+            Every order on Aaganbazaar goes straight to a Nepali seller — not an outsourced warehouse
+          </p>
+        </div>
+        <Link
+          to="/stores"
+          className="inline-block whitespace-nowrap rounded-lg bg-navy px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-navy-light"
+        >
+          Browse local shops ↗
+        </Link>
+      </div>
+
       {/* Quick links strip */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Link
-          to="/products"
-          className="rounded-xl bg-white/60 p-4 transition hover:shadow-md"
-        >
+        <Link to="/products" className="rounded-xl bg-white/60 p-4 transition hover:shadow-md">
           <ShoppingBag size={22} className="text-orange" strokeWidth={1.75} />
           <p className="mb-0.5 mt-2.5 text-sm font-medium text-navy">Everyday essentials</p>
           <p className="text-xs text-text-muted">Browse the full catalog</p>
@@ -195,28 +203,6 @@ export default function HomePage() {
           </Link>
         </div>
       )}
-
-      {/* Why Aaganbazaar */}
-      <div>
-        <p className="mb-2.5 text-[15px] font-medium text-navy">Why Aaganbazaar</p>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <div className="rounded-lg bg-white/60 p-3.5">
-            <Heart size={20} className="text-orange" />
-            <p className="mb-0.5 mt-2 text-xs font-medium text-navy">Local sellers</p>
-            <p className="text-[11px] text-text-muted">Every shop is Nepal based</p>
-          </div>
-          <div className="rounded-lg bg-white/60 p-3.5">
-            <Coins size={20} className="text-orange" />
-            <p className="mb-0.5 mt-2 text-xs font-medium text-navy">Fair pricing</p>
-            <p className="text-[11px] text-text-muted">Lower fees keep costs down</p>
-          </div>
-          <div className="rounded-lg bg-white/60 p-3.5">
-            <Truck size={20} className="text-orange" />
-            <p className="mb-0.5 mt-2 text-xs font-medium text-navy">Fast delivery</p>
-            <p className="text-[11px] text-text-muted">Even outside the valley</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
