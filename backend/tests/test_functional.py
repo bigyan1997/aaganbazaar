@@ -3,6 +3,8 @@ Functional Tests — verify every endpoint returns the correct HTTP status
 code and payload shape for happy-path, auth-required, and common error
 scenarios.
 """
+import base64
+import json
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -10,6 +12,8 @@ from django.contrib.auth import get_user_model
 from django.test import override_settings
 
 from apps.accounts.models import Address
+from apps.orders import esewa
+from apps.orders.models import Order
 from apps.sellers.models import SellerProfile
 
 from .base import BaseAPITest, TEST_SETTINGS
@@ -786,6 +790,28 @@ class TestOrderFunctional(BaseAPITest):
         item = r.data["seller_orders"][0]["items"][0]
         self.assertEqual(item["unit_price"], "150.00")
 
+    def test_checkout_esewa_returns_signed_payment_form(self):
+        user = self.authenticate()
+        product = self.create_product(price=Decimal("200.00"), stock_quantity=5)
+        self.add_to_cart(user, product, quantity=1)
+        payload = {**self.CHECKOUT_PAYLOAD, "payment_method": "esewa"}
+        r = self.client.post("/api/orders/checkout/", payload, format="json")
+        self.assertEqual(r.status_code, 201)
+        esewa_payment = r.data["esewa_payment"]
+        self.assertEqual(esewa_payment["fields"]["transaction_uuid"], r.data["order_number"])
+        self.assertEqual(esewa_payment["fields"]["total_amount"], "200.00")
+        self.assertTrue(esewa_payment["fields"]["signature"])
+        # Payment isn't confirmed yet at this point - only the eSewa
+        # callback (after the buyer actually pays) marks it paid.
+        self.assertEqual(r.data["payment_status"], "pending")
+
+    def test_checkout_cod_does_not_include_esewa_payment(self):
+        user = self.authenticate()
+        product = self.create_product(stock_quantity=5)
+        self.add_to_cart(user, product)
+        r = self.client.post("/api/orders/checkout/", self.CHECKOUT_PAYLOAD, format="json")
+        self.assertNotIn("esewa_payment", r.data)
+
     def test_order_list_scoped_to_buyer(self):
         user = self.authenticate()
         product = self.create_product(stock_quantity=5)
@@ -876,6 +902,92 @@ class TestOrderFunctional(BaseAPITest):
         _, seller_order, _ = self.create_order(buyer=buyer, status="delivered")
         send_refund_email(seller_order)
         mock_send_email.assert_called_once()
+
+
+# ─── eSewa callback ─────────────────────────────────────────────────────────────
+
+@override_settings(**TEST_SETTINGS)
+class TestEsewaCallbackFunctional(BaseAPITest):
+    def _encoded_payload(self, order, gateway_reported_status="COMPLETE", bad_signature=False):
+        from django.conf import settings
+
+        total_amount = str(order.total_amount)
+        signature = esewa._signature(total_amount, order.order_number, settings.ESEWA_PRODUCT_CODE)
+        if bad_signature:
+            signature = "tampered" + signature
+        payload = {
+            "transaction_code": "TEST123",
+            "status": gateway_reported_status,
+            "total_amount": total_amount,
+            "transaction_uuid": order.order_number,
+            "product_code": settings.ESEWA_PRODUCT_CODE,
+            "signed_field_names": "total_amount,transaction_uuid,product_code",
+            "signature": signature,
+        }
+        return base64.b64encode(json.dumps(payload).encode()).decode()
+
+    def _make_esewa_order(self, **kwargs):
+        buyer = self.create_user()
+        product = self.create_product(price=Decimal("500.00"))
+        order, _, _ = self.create_order(
+            buyer=buyer, product=product, payment_method=Order.PaymentMethod.ESEWA,
+            total_amount=Decimal("500.00"), **kwargs,
+        )
+        return order
+
+    @patch("apps.orders.esewa.fetch_gateway_status", return_value="COMPLETE")
+    def test_callback_marks_order_paid_when_gateway_confirms_complete(self, mock_status):
+        order = self._make_esewa_order()
+        r = self.client.get(f"/api/orders/esewa/callback/?data={self._encoded_payload(order)}")
+        self.assertEqual(r.status_code, 302)
+        self.assertIn(f"/orders/{order.order_number}?payment=success", r.url)
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, Order.PaymentStatus.PAID)
+
+    @patch("apps.orders.esewa.fetch_gateway_status", return_value="PENDING")
+    def test_callback_does_not_mark_paid_when_gateway_status_incomplete(self, mock_status):
+        order = self._make_esewa_order()
+        r = self.client.get(f"/api/orders/esewa/callback/?data={self._encoded_payload(order)}")
+        self.assertIn("payment=failed", r.url)
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, Order.PaymentStatus.PENDING)
+
+    @patch("apps.orders.esewa.fetch_gateway_status", return_value="COMPLETE")
+    def test_callback_rejects_tampered_signature(self, mock_status):
+        order = self._make_esewa_order()
+        payload = self._encoded_payload(order, bad_signature=True)
+        r = self.client.get(f"/api/orders/esewa/callback/?data={payload}")
+        self.assertIn("payment=error", r.url)
+        mock_status.assert_not_called()
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, Order.PaymentStatus.PENDING)
+
+    def test_callback_rejects_malformed_data_param(self):
+        r = self.client.get("/api/orders/esewa/callback/?data=not-valid-base64!!!")
+        self.assertIn("payment=error", r.url)
+
+    @patch("apps.orders.esewa.fetch_gateway_status", return_value="COMPLETE")
+    def test_callback_ignores_non_esewa_order(self, mock_status):
+        buyer = self.create_user()
+        product = self.create_product(price=Decimal("500.00"))
+        order, _, _ = self.create_order(
+            buyer=buyer, product=product, payment_method=Order.PaymentMethod.COD, total_amount=Decimal("500.00")
+        )
+        r = self.client.get(f"/api/orders/esewa/callback/?data={self._encoded_payload(order)}")
+        self.assertIn("payment=error", r.url)
+        mock_status.assert_not_called()
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, Order.PaymentStatus.PENDING)
+
+    @patch("apps.orders.esewa.fetch_gateway_status", return_value="COMPLETE")
+    def test_callback_is_idempotent(self, mock_status):
+        order = self._make_esewa_order()
+        data = self._encoded_payload(order)
+        self.client.get(f"/api/orders/esewa/callback/?data={data}")
+        r = self.client.get(f"/api/orders/esewa/callback/?data={data}")
+        self.assertIn("payment=success", r.url)
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, Order.PaymentStatus.PAID)
 
 
 # ─── Reviews ────────────────────────────────────────────────────────────────────

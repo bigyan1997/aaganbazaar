@@ -1,6 +1,10 @@
 from decimal import Decimal
 
+import requests
+from django.conf import settings
 from django.db import transaction
+from django.shortcuts import redirect
+from django.urls import reverse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
@@ -11,6 +15,7 @@ from apps.accounts.permissions import IsSeller
 from apps.cart.models import Cart
 from apps.catalog.models import Product
 
+from . import esewa
 from .emails import send_new_order_email, send_refund_email
 from .models import Order, OrderItem, SellerOrder
 from .serializers import CheckoutSerializer, OrderSerializer, SellerOrderSerializer, SellerOrderUpdateSerializer
@@ -90,7 +95,11 @@ class CheckoutView(APIView):
 
             cart.items.all().delete()
 
-        return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
+        data = OrderSerializer(order).data
+        if order.payment_method == Order.PaymentMethod.ESEWA:
+            callback_url = request.build_absolute_uri(reverse("esewa-callback"))
+            data["esewa_payment"] = esewa.build_payment_form(order, callback_url, callback_url)
+        return Response(data, status=status.HTTP_201_CREATED)
 
 
 class OrderListView(generics.ListAPIView):
@@ -146,3 +155,41 @@ class SellerOrderUpdateView(generics.UpdateAPIView):
         seller_order = serializer.save()
         if seller_order.status == SellerOrder.Status.REFUNDED and not was_refunded:
             send_refund_email(seller_order)
+
+
+class EsewaCallbackView(APIView):
+    """GET /api/orders/esewa/callback/?data=<base64> - eSewa redirects the
+    buyer's browser here after they approve or decline payment, regardless
+    of outcome (used as both success_url and failure_url). Always ends in
+    a redirect back to the frontend order page - this is a browser
+    navigation, not an API call a frontend would read a JSON body from."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        payload = esewa.decode_callback_payload(request.query_params.get("data", ""))
+        if not payload or not esewa.signature_is_valid(payload):
+            return redirect(f"{settings.FRONTEND_URL}/orders?payment=error")
+
+        order = Order.objects.filter(
+            order_number=payload.get("transaction_uuid"), payment_method=Order.PaymentMethod.ESEWA
+        ).first()
+        if order is None:
+            return redirect(f"{settings.FRONTEND_URL}/orders?payment=error")
+
+        # The signed redirect payload is a strong signal but still
+        # buyer-browser-controlled - confirm independently with eSewa
+        # before trusting it, using our own order.total_amount rather
+        # than anything from the payload.
+        try:
+            gateway_status = esewa.fetch_gateway_status(order)
+        except requests.RequestException:
+            return redirect(f"{settings.FRONTEND_URL}/orders/{order.order_number}?payment=pending")
+
+        if gateway_status != "COMPLETE":
+            return redirect(f"{settings.FRONTEND_URL}/orders/{order.order_number}?payment=failed")
+
+        if order.payment_status != Order.PaymentStatus.PAID:
+            order.payment_status = Order.PaymentStatus.PAID
+            order.save(update_fields=["payment_status"])
+        return redirect(f"{settings.FRONTEND_URL}/orders/{order.order_number}?payment=success")

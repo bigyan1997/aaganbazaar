@@ -1,12 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { getOrder } from "../../api/orders";
 import OrderTimeline from "../../components/orders/OrderTimeline";
 import ReviewForm from "../../components/orders/ReviewForm";
 
+const PAYMENT_BANNERS = {
+  success: { style: "bg-green-50 text-green-700 border-green-200", text: "Payment received - thank you!" },
+  failed: {
+    style: "bg-red-50 text-red-700 border-red-200",
+    text: "That payment wasn't completed. The order is still pending - contact the seller or place a new order.",
+  },
+  pending: {
+    style: "bg-amber-50 text-amber-700 border-amber-200",
+    text: "We're still confirming your payment with eSewa - refresh in a moment to check again.",
+  },
+};
+
 export default function OrderDetailPage() {
   const { orderNumber } = useParams();
+  const [searchParams] = useSearchParams();
+  const banner = PAYMENT_BANNERS[searchParams.get("payment")];
   const { data: order, isLoading } = useQuery({
     queryKey: ["order", orderNumber],
     queryFn: () => getOrder(orderNumber),
@@ -17,6 +31,8 @@ export default function OrderDetailPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {banner && <p className={`rounded-lg border px-4 py-3 text-sm ${banner.style}`}>{banner.text}</p>}
+
       <div className="flex items-start justify-between gap-2">
         <div>
           <h1 className="text-xl font-semibold text-navy">Order {order.order_number}</h1>

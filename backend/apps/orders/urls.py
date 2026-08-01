@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path("checkout/", views.CheckoutView.as_view(), name="checkout"),
+    path("esewa/callback/", views.EsewaCallbackView.as_view(), name="esewa-callback"),
     path("seller/", views.SellerOrderListView.as_view(), name="seller-order-list"),
     path("seller/<int:pk>/", views.SellerOrderUpdateView.as_view(), name="seller-order-update"),
     path("<str:order_number>/", views.OrderDetailView.as_view(), name="order-detail"),

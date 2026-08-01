@@ -171,6 +171,18 @@ FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
 # Used to verify that a Google ID token was actually issued for this app.
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
 
+# --- eSewa (payment gateway, ePay v2) ---
+# `or <default>` (not env()'s own `default=` kwarg) deliberately, so a
+# .env line present but left blank (as in .env.example) falls back to
+# eSewa's published UAT/sandbox values exactly like an absent line would -
+# env()'s own default only applies when the key is missing entirely, not
+# when it's set to "". Override all four with real production values (and
+# a real ESEWA_SECRET_KEY) before going live. Never commit a real secret key.
+ESEWA_PRODUCT_CODE = env("ESEWA_PRODUCT_CODE", default="") or "EPAYTEST"
+ESEWA_SECRET_KEY = env("ESEWA_SECRET_KEY", default="") or "8gBm/:&EnhH.1/q"
+ESEWA_FORM_URL = env("ESEWA_FORM_URL", default="") or "https://rc-epay.esewa.com.np/api/epay/main/v2/form"
+ESEWA_STATUS_URL = env("ESEWA_STATUS_URL", default="") or "https://rc.esewa.com.np/api/epay/transaction/status/"
+
 # --- Marketplace ---
 # Percentage taken on a sale when a seller doesn't have their own override
 # (SellerProfile.commission_rate). Placeholder - set to an actual figure

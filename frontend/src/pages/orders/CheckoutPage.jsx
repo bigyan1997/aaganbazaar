@@ -20,6 +20,24 @@ const EMPTY_FORM = {
   shipping_province: PROVINCES[0],
 };
 
+// eSewa's hosted payment page only accepts a real browser POST, not
+// fetch/XHR - build and submit an invisible form to leave the SPA and
+// land on it directly.
+function redirectToEsewa({ action_url, fields }) {
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = action_url;
+  Object.entries(fields).forEach(([name, value]) => {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  form.submit();
+}
+
 export default function CheckoutPage() {
   const { data: cart } = useQuery({ queryKey: ["cart"], queryFn: getCart });
   const { data: addresses } = useQuery({ queryKey: ["addresses"], queryFn: getAddresses });
@@ -41,6 +59,10 @@ export default function CheckoutPage() {
     mutationFn: checkout,
     onSuccess: (order) => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
+      if (order.esewa_payment) {
+        redirectToEsewa(order.esewa_payment);
+        return; // browser is about to navigate away to eSewa - nothing left to render here
+      }
       navigate(`/orders/${order.order_number}`, { replace: true });
     },
   });
@@ -203,7 +225,9 @@ export default function CheckoutPage() {
           <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className={inputClass}>
             <option value="cod">Cash on delivery</option>
             <option value="esewa">eSewa</option>
-            <option value="khalti">Khalti</option>
+            <option value="khalti" disabled>
+              Khalti (coming soon)
+            </option>
           </select>
         </div>
 
