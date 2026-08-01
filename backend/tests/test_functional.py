@@ -945,12 +945,23 @@ class TestEsewaCallbackFunctional(BaseAPITest):
         self.assertEqual(order.payment_status, Order.PaymentStatus.PAID)
 
     @patch("apps.orders.esewa.fetch_gateway_status", return_value="PENDING")
-    def test_callback_does_not_mark_paid_when_gateway_status_incomplete(self, mock_status):
+    def test_callback_leaves_order_pending_when_gateway_status_still_pending(self, mock_status):
+        # A genuinely unresolved gateway status (PENDING/AMBIGUOUS) isn't a
+        # confident "it failed" - the order should stay pending, not flip
+        # to failed, so a slow-to-settle payment can still complete later.
+        order = self._make_esewa_order()
+        r = self.client.get(f"/api/orders/esewa/callback/?data={self._encoded_payload(order)}")
+        self.assertIn("payment=pending", r.url)
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, Order.PaymentStatus.PENDING)
+
+    @patch("apps.orders.esewa.fetch_gateway_status", return_value="CANCELED")
+    def test_callback_marks_order_failed_when_gateway_confirms_canceled(self, mock_status):
         order = self._make_esewa_order()
         r = self.client.get(f"/api/orders/esewa/callback/?data={self._encoded_payload(order)}")
         self.assertIn("payment=failed", r.url)
         order.refresh_from_db()
-        self.assertEqual(order.payment_status, Order.PaymentStatus.PENDING)
+        self.assertEqual(order.payment_status, Order.PaymentStatus.FAILED)
 
     @patch("apps.orders.esewa.fetch_gateway_status", return_value="COMPLETE")
     def test_callback_rejects_tampered_signature(self, mock_status):

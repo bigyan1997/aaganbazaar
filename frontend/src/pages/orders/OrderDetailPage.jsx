@@ -9,7 +9,7 @@ const PAYMENT_BANNERS = {
   success: { style: "bg-green-50 text-green-700 border-green-200", text: "Payment received - thank you!" },
   failed: {
     style: "bg-red-50 text-red-700 border-red-200",
-    text: "That payment wasn't completed. The order is still pending - contact the seller or place a new order.",
+    text: "That payment didn't go through, so this order has been marked as failed. Place a new order if you'd like to try again.",
   },
   pending: {
     style: "bg-amber-50 text-amber-700 border-amber-200",

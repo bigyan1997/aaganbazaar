@@ -20,6 +20,13 @@ from django.conf import settings
 
 SIGNED_FIELDS = ("total_amount", "transaction_uuid", "product_code")
 
+# eSewa's documented status values: PENDING, COMPLETE, FULL_REFUND,
+# PARTIAL_REFUND, AMBIGUOUS, NOT_FOUND, CANCELED. Only these two mean the
+# attempt definitively did not (and will not) succeed - PENDING/AMBIGUOUS
+# genuinely haven't resolved yet, and *_REFUND means money moved at some
+# point, so none of those should be treated as a plain failure.
+FAILED_GATEWAY_STATUSES = {"CANCELED", "NOT_FOUND"}
+
 
 def _signature(total_amount, transaction_uuid, product_code):
     message = f"total_amount={total_amount},transaction_uuid={transaction_uuid},product_code={product_code}"

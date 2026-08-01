@@ -186,10 +186,18 @@ class EsewaCallbackView(APIView):
         except requests.RequestException:
             return redirect(f"{settings.FRONTEND_URL}/orders/{order.order_number}?payment=pending")
 
-        if gateway_status != "COMPLETE":
+        if gateway_status == "COMPLETE":
+            if order.payment_status != Order.PaymentStatus.PAID:
+                order.payment_status = Order.PaymentStatus.PAID
+                order.save(update_fields=["payment_status"])
+            return redirect(f"{settings.FRONTEND_URL}/orders/{order.order_number}?payment=success")
+
+        if gateway_status in esewa.FAILED_GATEWAY_STATUSES:
+            if order.payment_status == Order.PaymentStatus.PENDING:
+                order.payment_status = Order.PaymentStatus.FAILED
+                order.save(update_fields=["payment_status"])
             return redirect(f"{settings.FRONTEND_URL}/orders/{order.order_number}?payment=failed")
 
-        if order.payment_status != Order.PaymentStatus.PAID:
-            order.payment_status = Order.PaymentStatus.PAID
-            order.save(update_fields=["payment_status"])
-        return redirect(f"{settings.FRONTEND_URL}/orders/{order.order_number}?payment=success")
+        # PENDING / AMBIGUOUS / *_REFUND - not a confident final answer,
+        # leave payment_status exactly as it was rather than guessing.
+        return redirect(f"{settings.FRONTEND_URL}/orders/{order.order_number}?payment=pending")
